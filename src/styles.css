@@ -1505,6 +1505,24 @@ a { touch-action: manipulation; }
 .trend-table th { color: var(--ink-soft); font-weight: 600; }
 .trend-table td { font-variant-numeric: tabular-nums; }
 
+/* ---------- Admin table toolbar (search + filter) ---------- */
+
+.admin-toolbar {
+  display: flex;
+  gap: 0.8rem;
+  margin-bottom: 1.2rem;
+  flex-wrap: wrap;
+}
+
+.admin-toolbar__search { flex: 1; min-width: 200px; margin-bottom: 0; }
+.admin-toolbar__filter { width: auto; min-width: 160px; }
+
+.admin-table__empty {
+  text-align: center;
+  color: var(--ink-faint);
+  padding: 2rem 1rem;
+}
+
 /* ---------- Admin data table (department breakdown) ---------- */
 
 .admin-table-wrap { overflow-x: auto; }
@@ -1710,7 +1728,8 @@ a { touch-action: manipulation; }
   cursor: pointer;
 }
 
-.checkbox-row input[type='checkbox'] {
+.checkbox-row input[type='checkbox'],
+.checkbox-row input[type='radio'] {
   width: 20px;
   height: 20px;
   accent-color: var(--blue-deep);

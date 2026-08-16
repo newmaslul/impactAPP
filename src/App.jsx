@@ -15,6 +15,7 @@ import Profile from './routes/app/Profile.jsx';
 import AdminShell from './routes/admin/AdminShell.jsx';
 import Dashboard from './routes/admin/Dashboard.jsx';
 import AdminChallenges from './routes/admin/AdminChallenges.jsx';
+import AdminEmployees from './routes/admin/AdminEmployees.jsx';
 import ComingSoon from './routes/ComingSoon.jsx';
 
 function OnboardingLayout() {
@@ -49,10 +50,7 @@ export default function App() {
       <Route path="/admin" element={<AdminShell />}>
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<Dashboard />} />
-        <Route
-          path="employees"
-          element={<ComingSoon title="עובדים בבנייה" description="ניהול משתמשים והרשאות נמצא כאן בקרוב." />}
-        />
+        <Route path="employees" element={<AdminEmployees />} />
         <Route path="challenges" element={<AdminChallenges />} />
         <Route
           path="impact"
