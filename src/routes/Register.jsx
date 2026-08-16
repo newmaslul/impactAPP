@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useBiometricAuth } from '../hooks/useBiometricAuth.js';
-import { saveUser, setCurrentUserPhone, setBiometricUserPhone } from '../lib/userStore.js';
+import { api, setToken } from '../lib/api.js';
+import { setBiometricPhone } from '../lib/biometricDevice.js';
 import { DEPARTMENTS } from '../lib/departments.js';
 
 const PHONE_RE = /^0\d{8,9}$/;
@@ -13,7 +14,9 @@ export default function Register() {
   const [phone, setPhone] = useState(location.state?.phone ?? '');
   const [username, setUsername] = useState('');
   const [department, setDepartment] = useState(DEPARTMENTS[0]);
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
 
   const { available: bioAvailable, busy: bioBusy, error: bioError, authenticate } = useBiometricAuth();
   const [biometricEnabled, setBiometricEnabled] = useState(false);
@@ -23,19 +26,26 @@ export default function Register() {
     if (ok) setBiometricEnabled(true);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!PHONE_RE.test(phone.trim())) return setError('הכניסו מספר טלפון תקין (לדוגמה 0501234567)');
     if (!username.trim()) return setError('נדרש שם משתמש');
+    if (password.length < 6) return setError('הסיסמה צריכה להכיל לפחות 6 תווים');
 
     setError('');
-    const user = saveUser({ phone: phone.trim(), username: username.trim(), department, biometricEnabled });
-    setCurrentUserPhone(user.phone);
-    if (biometricEnabled) setBiometricUserPhone(user.phone);
-
-    // Account created — continue into product onboarding (role, org,
-    // connecting an activity source) before landing in the app.
-    navigate('/onboarding');
+    setBusy(true);
+    try {
+      const { token } = await api.register({ phone: phone.trim(), username: username.trim(), department, password, biometricEnabled });
+      setToken(token);
+      if (biometricEnabled) setBiometricPhone(phone.trim());
+      // Account created — continue into product onboarding (role, org,
+      // connecting an activity source) before landing in the app.
+      navigate('/onboarding');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -91,6 +101,20 @@ export default function Register() {
             </select>
           </div>
 
+          <div className="field">
+            <label htmlFor="reg-password">סיסמה</label>
+            <input
+              id="reg-password"
+              type="password"
+              className="text-input"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="new-password"
+              dir="ltr"
+            />
+          </div>
+
           {bioAvailable && (
             <div className="field">
               <label>זיהוי ביומטרי</label>
@@ -109,7 +133,7 @@ export default function Register() {
 
           {error && <p className="form-error">{error}</p>}
 
-          <button type="submit" className="btn-primary">השלימו רישום</button>
+          <button type="submit" className="btn-primary" disabled={busy}>{busy ? 'יוצרים חשבון…' : 'השלימו רישום'}</button>
 
           <button type="button" className="link-btn" style={{ alignSelf: 'center' }} onClick={() => navigate('/')}>
             כבר יש לי חשבון — חזרה להתחברות

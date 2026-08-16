@@ -1,11 +1,10 @@
 import ProgressBar from '../../components/ProgressBar.jsx';
 import { formatNumber } from '../../lib/format.js';
-import { getCurrentUser } from '../../lib/userStore.js';
+import { useCurrentUser } from '../../context/CurrentUserContext.jsx';
 
 // Mock data — will come from the user's account + activity history later.
-// name falls back to a demo value when no one has registered on this
-// device/browser yet (e.g. visiting /app/profile directly).
-const DEMO_USER = { name: 'איתי', level: 8, levelProgressPct: 72 };
+const LEVEL = 8;
+const LEVEL_PROGRESS_PCT = 72;
 
 const BADGES = [
   { icon: '🏅', label: '30 ימים' },
@@ -22,9 +21,7 @@ const STATS = [
 ];
 
 export default function Profile() {
-  const currentUser = getCurrentUser();
-  const name = currentUser?.username || DEMO_USER.name;
-  const { level, levelProgressPct } = DEMO_USER;
+  const { user } = useCurrentUser();
 
   return (
     <div className="home">
@@ -32,17 +29,17 @@ export default function Profile() {
 
       <section className="card">
         <div className="profile-header">
-          <span className="profile-header__avatar" aria-hidden="true">{name[0]}</span>
+          <span className="profile-header__avatar" aria-hidden="true">{user.username[0]}</span>
           <div className="profile-header__text">
-            <p className="profile-header__name">{name}</p>
+            <p className="profile-header__name">{user.username}</p>
             <p className="profile-header__level">
-              רמה {level}
-              {currentUser?.department && <span className="profile-header__dept"> · {currentUser.department}</span>}
+              רמה {LEVEL}
+              {user.department && <span className="profile-header__dept"> · {user.department}</span>}
             </p>
           </div>
         </div>
         <div className="profile-header__progress">
-          <ProgressBar value={levelProgressPct} tone="achieve" label={`${levelProgressPct}% לרמה ${level + 1}`} />
+          <ProgressBar value={LEVEL_PROGRESS_PCT} tone="achieve" label={`${LEVEL_PROGRESS_PCT}% לרמה ${LEVEL + 1}`} />
         </div>
       </section>
 

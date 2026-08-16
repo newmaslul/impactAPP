@@ -16,10 +16,28 @@ export default function EditEmployeeForm({ employee, onCancel, onSave, onRemove 
   const [role, setRole] = useState(employee.role);
   const [status, setStatus] = useState(employee.status === 'invited' ? 'active' : employee.status);
   const [confirmingRemove, setConfirmingRemove] = useState(false);
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSave({ ...employee, department, role, status });
+    setBusy(true);
+    try {
+      await onSave({ ...employee, department, role, status });
+    } catch (err) {
+      setError(err.message);
+      setBusy(false);
+    }
+  };
+
+  const handleRemove = async () => {
+    setBusy(true);
+    try {
+      await onRemove(employee.id);
+    } catch (err) {
+      setError(err.message);
+      setBusy(false);
+    }
   };
 
   return (
@@ -86,12 +104,14 @@ export default function EditEmployeeForm({ employee, onCancel, onSave, onRemove 
           </div>
         </div>
 
+        {error && <p className="form-error">{error}</p>}
+
         <div className="admin-form__actions admin-form__actions--split">
           {confirmingRemove ? (
             <div className="confirm-remove">
               <span>להסיר את {employee.name} מהרשימה?</span>
-              <button type="button" className="btn-ghost" onClick={() => setConfirmingRemove(false)}>ביטול</button>
-              <button type="button" className="btn-danger" onClick={() => onRemove(employee.id)}>כן, הסר</button>
+              <button type="button" className="btn-ghost" onClick={() => setConfirmingRemove(false)} disabled={busy}>ביטול</button>
+              <button type="button" className="btn-danger" onClick={handleRemove} disabled={busy}>כן, הסר</button>
             </div>
           ) : (
             <button type="button" className="link-btn link-btn--danger" onClick={() => setConfirmingRemove(true)}>
@@ -100,8 +120,10 @@ export default function EditEmployeeForm({ employee, onCancel, onSave, onRemove 
           )}
 
           <div className="admin-form__actions">
-            <button type="button" className="btn-ghost" onClick={onCancel}>ביטול</button>
-            <button type="submit" className="btn-primary admin-form__submit">שמור שינויים</button>
+            <button type="button" className="btn-ghost" onClick={onCancel} disabled={busy}>ביטול</button>
+            <button type="submit" className="btn-primary admin-form__submit" disabled={busy}>
+              {busy ? 'שומרים…' : 'שמור שינויים'}
+            </button>
           </div>
         </div>
       </form>

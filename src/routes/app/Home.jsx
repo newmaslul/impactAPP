@@ -1,14 +1,11 @@
 import ProgressBar from '../../components/ProgressBar.jsx';
 import { usePedometer } from '../../hooks/usePedometer.js';
-import { getCurrentUser } from '../../lib/userStore.js';
+import { useCurrentUser } from '../../context/CurrentUserContext.jsx';
 
 // Mock data — will come from the connected activity source + backend later.
 // Steps are the exception: those come live from the phone's accelerometer
 // via usePedometer(). DEMO_STEPS only backs the display when that sensor
 // isn't available (desktop browsers, permission not yet granted/denied).
-// USER_NAME falls back to a demo name when no one has registered on this
-// device/browser yet (e.g. visiting /app/home directly).
-const DEMO_USER_NAME = 'איתי';
 const DEMO_STEPS = 7420;
 const DAILY_GOAL = 8000;
 const ACTIVITY_MIN = 34;
@@ -23,12 +20,11 @@ export default function Home() {
   const liveMode = status === 'active';
   const displaySteps = liveMode ? steps : DEMO_STEPS;
   const goalPct = Math.min(100, Math.round((displaySteps / DAILY_GOAL) * 100));
-  const currentUser = getCurrentUser();
-  const userName = currentUser?.username || DEMO_USER_NAME;
+  const { user } = useCurrentUser();
 
   return (
     <div className="home">
-      <h1 className="home__greeting">שלום {userName} 👋</h1>
+      <h1 className="home__greeting">שלום {user.username} 👋</h1>
 
       {(status === 'idle' || status === 'denied') && (
         <section className="card pedometer-banner">

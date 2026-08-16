@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useBiometricAuth } from '../hooks/useBiometricAuth.js';
-import { findUserByPhone, setCurrentUserPhone, getBiometricUserPhone } from '../lib/userStore.js';
+import { api, setToken } from '../lib/api.js';
+import { getBiometricPhone } from '../lib/biometricDevice.js';
 
 const PHONE_RE = /^0\d{8,9}$/;
 
@@ -56,42 +57,44 @@ function LoginBlock({ onForgot }) {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
   const { available: bioAvailable, busy: bioBusy, error: bioError, authenticate } = useBiometricAuth();
-  const biometricUserPhone = getBiometricUserPhone();
+  const biometricPhone = getBiometricPhone();
 
-  // No backend exists yet, so "the system" this checks against is this
-  // browser's own localStorage (see lib/userStore.js): a known phone
-  // number logs straight in, an unrecognized one is sent to register — it
-  // never actually verifies the password against anything, since none is
-  // stored.
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!PHONE_RE.test(phone.trim())) {
-      setError('הכניסו מספר טלפון תקין (לדוגמה 0501234567)');
-      return;
-    }
-    if (password.length < 6) {
-      setError('הסיסמה צריכה להכיל לפחות 6 תווים');
-      return;
-    }
+    if (!PHONE_RE.test(phone.trim())) return setError('הכניסו מספר טלפון תקין (לדוגמה 0501234567)');
+    if (password.length < 6) return setError('הסיסמה צריכה להכיל לפחות 6 תווים');
+
     setError('');
-    const existing = findUserByPhone(phone);
-    if (existing) {
-      setCurrentUserPhone(existing.phone);
+    setBusy(true);
+    try {
+      const { token } = await api.login(phone, password);
+      setToken(token);
       navigate('/app/home');
-    } else {
-      navigate('/register', { state: { phone } });
+    } catch (err) {
+      if (err.message.includes('שגויים')) {
+        // Real backend, real rejection — but this app has no separate
+        // "sign up first" step, so treat "not found" the same way the
+        // old mock did: send them to register instead of dead-ending.
+        navigate('/register', { state: { phone } });
+      } else {
+        setError(err.message);
+      }
+    } finally {
+      setBusy(false);
     }
   };
 
   const handleBiometric = async () => {
     const ok = await authenticate();
-    if (!ok) return;
-    if (biometricUserPhone) {
-      setCurrentUserPhone(biometricUserPhone);
+    if (!ok || !biometricPhone) return;
+    try {
+      const { token } = await api.biometricLogin(biometricPhone);
+      setToken(token);
       navigate('/app/home');
-    } else {
-      navigate('/register');
+    } catch (err) {
+      setError(err.message);
     }
   };
 
@@ -131,9 +134,9 @@ function LoginBlock({ onForgot }) {
 
       {error && <p className="form-error">{error}</p>}
 
-      <button type="submit" className="btn-primary">התחברות</button>
+      <button type="submit" className="btn-primary" disabled={busy}>{busy ? 'מתחברים…' : 'התחברות'}</button>
 
-      {bioAvailable && biometricUserPhone && (
+      {bioAvailable && biometricPhone && (
         <>
           <div className="auth-divider">או</div>
           <button
@@ -156,15 +159,22 @@ function ForgotPasswordBlock({ onBack }) {
   const [phone, setPhone] = useState('');
   const [error, setError] = useState('');
   const [sent, setSent] = useState(false);
+  const [busy, setBusy] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!PHONE_RE.test(phone.trim())) {
-      setError('הכניסו מספר טלפון תקין (לדוגמה 0501234567)');
-      return;
-    }
+    if (!PHONE_RE.test(phone.trim())) return setError('הכניסו מספר טלפון תקין (לדוגמה 0501234567)');
+
     setError('');
-    setSent(true);
+    setBusy(true);
+    try {
+      await api.forgotPassword(phone);
+      setSent(true);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
   };
 
   if (sent) {
@@ -198,7 +208,7 @@ function ForgotPasswordBlock({ onBack }) {
 
       {error && <p className="form-error">{error}</p>}
 
-      <button type="submit" className="btn-primary">שלח קוד לאיפוס</button>
+      <button type="submit" className="btn-primary" disabled={busy}>{busy ? 'שולחים…' : 'שלח קוד לאיפוס'}</button>
       <button type="button" className="btn-ghost btn-ghost--block" onClick={onBack}>
         חזרה להתחברות
       </button>

@@ -1,22 +1,29 @@
 import { useState } from 'react';
 import { DEPARTMENTS } from '../../lib/departments.js';
 
-const EMAIL_RE = /^\S+@\S+\.\S+$/;
+const PHONE_RE = /^0\d{8,9}$/;
 
 export default function EmployeeInviteForm({ onCancel, onSubmit }) {
   const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [department, setDepartment] = useState(DEPARTMENTS[0]);
   const [role, setRole] = useState('employee');
   const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!name.trim()) return setError('נדרש שם');
-    if (!EMAIL_RE.test(email.trim())) return setError('הכניסו כתובת אימייל תקינה');
+    if (!PHONE_RE.test(phone.trim())) return setError('הכניסו מספר טלפון תקין (לדוגמה 0501234567)');
 
     setError('');
-    onSubmit({ name: name.trim(), email: email.trim(), department, role });
+    setBusy(true);
+    try {
+      await onSubmit({ name: name.trim(), phone: phone.trim(), department, role });
+    } catch (err) {
+      setError(err.message);
+      setBusy(false);
+    }
   };
 
   return (
@@ -39,14 +46,14 @@ export default function EmployeeInviteForm({ onCancel, onSubmit }) {
         </div>
 
         <div className="field">
-          <label htmlFor="employee-email">אימייל</label>
+          <label htmlFor="employee-phone">טלפון</label>
           <input
-            id="employee-email"
-            type="email"
+            id="employee-phone"
+            type="tel"
             className="text-input"
-            placeholder="you@company.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            placeholder="0501234567"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
             dir="ltr"
           />
         </div>
@@ -83,7 +90,9 @@ export default function EmployeeInviteForm({ onCancel, onSubmit }) {
 
         <div className="admin-form__actions">
           <button type="button" className="btn-ghost" onClick={onCancel}>ביטול</button>
-          <button type="submit" className="btn-primary admin-form__submit">שלח הזמנה</button>
+          <button type="submit" className="btn-primary admin-form__submit" disabled={busy}>
+            {busy ? 'שולחים…' : 'שלח הזמנה'}
+          </button>
         </div>
       </form>
     </div>
