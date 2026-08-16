@@ -69,4 +69,12 @@ export const api = {
   adminListClasses: () => request('/admin-classes'),
   adminCreateClass: (payload) => request('/admin-classes', { method: 'POST', body: payload }),
   adminDeleteClass: (id) => request(`/admin-classes/${id}`, { method: 'DELETE' }),
+
+  listContent: () => request('/content', { auth: true }),
+  completeContent: (id) => request(`/content/${id}/complete`, { method: 'POST', auth: true }),
+
+  adminListContent: () => request('/admin-content'),
+  adminCreateContent: (payload) => request('/admin-content', { method: 'POST', body: payload }),
+  adminUpdateContent: (id, payload) => request(`/admin-content/${id}`, { method: 'PATCH', body: payload }),
+  adminDeleteContent: (id) => request(`/admin-content/${id}`, { method: 'DELETE' }),
 };

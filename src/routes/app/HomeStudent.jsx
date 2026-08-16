@@ -115,6 +115,10 @@ export default function HomeStudent() {
             </div>
           </div>
 
+          <button type="button" className="btn-primary" onClick={() => navigate('/app/content')}>
+            📺 תכנים לצפייה — קבלו נקודות
+          </button>
+
           <button type="button" className="btn-ghost btn-ghost--block" onClick={() => navigate('/app/activity-history')}>
             צפו בהיסטוריה המלאה
           </button>

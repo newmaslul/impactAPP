@@ -12,6 +12,7 @@ const GRAVITY_SMOOTHING = 0.9; // how slowly the gravity baseline adapts
 const STEP_THRESHOLD = 1.2; // m/s² of leftover motion to register as a step
 const STEP_DEBOUNCE_MS = 300; // minimum time between two counted steps
 const STORAGE_PREFIX = 'maslul:steps:';
+const AUTO_ENABLE_KEY = 'maslul:pedometerAutoEnable';
 
 function todayKey() {
   return STORAGE_PREFIX + new Date().toISOString().slice(0, 10);
@@ -30,6 +31,22 @@ function saveStoredSteps(n) {
     localStorage.setItem(todayKey(), String(n));
   } catch {
     /* private-browsing or storage disabled — steps just won't persist */
+  }
+}
+
+function wantsAutoEnable() {
+  try {
+    return localStorage.getItem(AUTO_ENABLE_KEY) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+function rememberAutoEnable() {
+  try {
+    localStorage.setItem(AUTO_ENABLE_KEY, 'true');
+  } catch {
+    /* private-browsing or storage disabled — choice just won't persist */
   }
 }
 
@@ -113,15 +130,35 @@ export function usePedometer() {
 
     if (!needsPermission) {
       setStatus('active');
+      rememberAutoEnable();
       return;
     }
 
     try {
       const result = await window.DeviceMotionEvent.requestPermission();
-      setStatus(result === 'granted' ? 'active' : 'denied');
+      if (result === 'granted') {
+        setStatus('active');
+        rememberAutoEnable();
+      } else {
+        setStatus('denied');
+      }
     } catch {
       setStatus('denied');
     }
+  }, [status]);
+
+  // Once the user has enabled the pedometer once, remember that choice and
+  // re-activate automatically on every future visit — no need to tap
+  // "הפעל מד צעדים" again each session. On platforms that gate motion
+  // access behind an explicit user gesture (iOS Safari), this attempt can
+  // still be silently refused by the browser since it isn't triggered by a
+  // tap; when that happens the permission banner reappears so there's
+  // still a one-tap way to re-enable for that session.
+  useEffect(() => {
+    if (status === 'idle' && wantsAutoEnable()) {
+      requestPermission();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status]);
 
   return { steps, status, requestPermission };
