@@ -13,10 +13,13 @@ import Group from './routes/app/Group.jsx';
 import Impact from './routes/app/Impact.jsx';
 import ImpactProjectVote from './routes/app/ImpactProjectVote.jsx';
 import Profile from './routes/app/Profile.jsx';
+import ActivityHistory from './routes/app/ActivityHistory.jsx';
 import AdminShell from './routes/admin/AdminShell.jsx';
 import Dashboard from './routes/admin/Dashboard.jsx';
 import AdminChallenges from './routes/admin/AdminChallenges.jsx';
 import AdminEmployees from './routes/admin/AdminEmployees.jsx';
+import ScoringConfig from './routes/admin/ScoringConfig.jsx';
+import AdminSchools from './routes/admin/AdminSchools.jsx';
 import ComingSoon from './routes/ComingSoon.jsx';
 
 function OnboardingLayout() {
@@ -47,6 +50,7 @@ export default function App() {
         <Route path="impact" element={<Impact />} />
         <Route path="impact/vote" element={<ImpactProjectVote />} />
         <Route path="profile" element={<Profile />} />
+        <Route path="activity-history" element={<ActivityHistory />} />
       </Route>
 
       <Route path="/admin" element={<AdminShell />}>
@@ -54,6 +58,8 @@ export default function App() {
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="employees" element={<AdminEmployees />} />
         <Route path="challenges" element={<AdminChallenges />} />
+        <Route path="scoring-config" element={<ScoringConfig />} />
+        <Route path="schools" element={<AdminSchools />} />
         <Route
           path="impact"
           element={<ComingSoon title="Impact בבנייה" description="מעקב תרומות ובחירות פרויקטים ברמת הארגון נמצא כאן בקרוב." />}

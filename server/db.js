@@ -24,9 +24,107 @@ db.exec(`
     biometric_enabled INTEGER NOT NULL DEFAULT 0,
     points INTEGER NOT NULL DEFAULT 0,
     weekly_activity INTEGER NOT NULL DEFAULT 0,
+    class_id INTEGER REFERENCES classes(id),
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
 `);
+
+// class_id was added after the original table existed on any database
+// created before this feature — add it if it's missing rather than
+// requiring a fresh database.
+const userColumns = db.prepare("PRAGMA table_info(users)").all().map((c) => c.name);
+if (!userColumns.includes('class_id')) {
+  db.exec('ALTER TABLE users ADD COLUMN class_id INTEGER REFERENCES classes(id)');
+}
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS schools (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS classes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    school_id INTEGER NOT NULL REFERENCES schools(id),
+    name TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
+  -- Versioned: a new row per admin change, never mutated, so historical
+  -- scores stay reproducible under the config that was effective that day.
+  CREATE TABLE IF NOT EXISTS scoring_config (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    effective_from TEXT NOT NULL,
+    steps_goal INTEGER NOT NULL DEFAULT 10000,
+    steps_weight REAL NOT NULL DEFAULT 40,
+    active_minutes_goal INTEGER NOT NULL DEFAULT 60,
+    active_minutes_weight REAL NOT NULL DEFAULT 30,
+    distance_goal_km REAL NOT NULL DEFAULT 6,
+    distance_weight REAL NOT NULL DEFAULT 15,
+    vigorous_minutes_goal INTEGER NOT NULL DEFAULT 20,
+    vigorous_weight REAL NOT NULL DEFAULT 15,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
+  -- One row per ingestion event (an adapter reporting a reading for a
+  -- date) — raw, unvalidated. daily_scores is the derived, scored table.
+  CREATE TABLE IF NOT EXISTS raw_daily_metrics (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    date TEXT NOT NULL,
+    source TEXT NOT NULL CHECK (source IN ('device_sensor','apple_health','health_connect','fitbit','garmin','manual')),
+    steps INTEGER,
+    active_minutes INTEGER,
+    distance_km REAL,
+    vigorous_minutes INTEGER,
+    active_energy_kcal REAL,
+    sync_batch_id TEXT,
+    ingested_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS daily_scores (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    date TEXT NOT NULL,
+    steps_value INTEGER,
+    steps_missing INTEGER NOT NULL DEFAULT 0,
+    steps_score REAL NOT NULL DEFAULT 0,
+    active_minutes_value INTEGER,
+    active_minutes_missing INTEGER NOT NULL DEFAULT 0,
+    active_minutes_score REAL NOT NULL DEFAULT 0,
+    distance_value REAL,
+    distance_missing INTEGER NOT NULL DEFAULT 0,
+    distance_score REAL NOT NULL DEFAULT 0,
+    vigorous_value INTEGER,
+    vigorous_missing INTEGER NOT NULL DEFAULT 0,
+    vigorous_score REAL NOT NULL DEFAULT 0,
+    raw_total REAL NOT NULL DEFAULT 0,
+    max_possible REAL NOT NULL DEFAULT 0,
+    activity_score REAL,
+    scoring_config_id INTEGER REFERENCES scoring_config(id),
+    quality_flags TEXT,
+    calculated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(user_id, date)
+  );
+
+  CREATE TABLE IF NOT EXISTS data_quality_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    date TEXT NOT NULL,
+    metric TEXT NOT NULL,
+    flag_type TEXT NOT NULL,
+    details TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+`);
+
+if (db.prepare('SELECT COUNT(*) AS n FROM scoring_config').get().n === 0) {
+  db.prepare(`
+    INSERT INTO scoring_config (effective_from, steps_goal, steps_weight, active_minutes_goal, active_minutes_weight, distance_goal_km, distance_weight, vigorous_minutes_goal, vigorous_weight)
+    VALUES ('2020-01-01', 10000, 40, 60, 30, 6, 15, 20, 15)
+  `).run();
+}
 
 // Seed the same mock roster the admin screen used to hardcode client-side,
 // so a fresh database still demos a populated org — but now every row

@@ -4,3 +4,4 @@ dist
 *.local
 server/data/*.db*
 .env
+.claude/settings.local.json

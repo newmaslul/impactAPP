@@ -51,4 +51,18 @@ export const api = {
   adminUpdateEmployee: (id, payload) => request(`/api/admin/employees/${id}`, { method: 'PATCH', body: payload }),
   adminDeleteEmployee: (id) => request(`/api/admin/employees/${id}`, { method: 'DELETE' }),
   adminInviteEmployee: (payload) => request('/api/admin/employees/invite', { method: 'POST', body: payload }),
+
+  activitySync: (payload) => request('/api/activity/sync', { method: 'POST', body: payload, auth: true }),
+  activityToday: () => request('/api/activity/today', { auth: true }),
+  activityHistory: (days = 30) => request(`/api/activity/history?days=${days}`, { auth: true }),
+  activitySummary: () => request('/api/activity/summary', { auth: true }),
+  activityConfig: () => request('/api/activity/config'),
+  updateActivityConfig: (payload) => request('/api/activity/config', { method: 'PUT', body: payload }),
+
+  adminListSchools: () => request('/api/admin/schools'),
+  adminCreateSchool: (payload) => request('/api/admin/schools', { method: 'POST', body: payload }),
+  adminDeleteSchool: (id) => request(`/api/admin/schools/${id}`, { method: 'DELETE' }),
+  adminListClasses: () => request('/api/admin/classes'),
+  adminCreateClass: (payload) => request('/api/admin/classes', { method: 'POST', body: payload }),
+  adminDeleteClass: (id) => request(`/api/admin/classes/${id}`, { method: 'DELETE' }),
 };

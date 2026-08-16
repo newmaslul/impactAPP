@@ -1,6 +1,7 @@
 import ProgressBar from '../../components/ProgressBar.jsx';
 import { usePedometer } from '../../hooks/usePedometer.js';
 import { useCurrentUser } from '../../context/CurrentUserContext.jsx';
+import HomeStudent from './HomeStudent.jsx';
 
 // Mock data — will come from the connected activity source + backend later.
 // Steps are the exception: those come live from the phone's accelerometer
@@ -15,12 +16,22 @@ const TEAM = { points: 78420, goal: 100000 };
 
 const fmt = (n) => n.toLocaleString('he-IL');
 
+// A thin branch by account type — kept as two separate child components
+// (not an early-return inside one component) so each can call its own
+// hooks unconditionally; user.role can change (demo default → fetched
+// value) after the initial render, which would otherwise violate the
+// rules of hooks.
 export default function Home() {
+  const { user } = useCurrentUser();
+  return user.role === 'student' ? <HomeStudent /> : <HomeEmployee />;
+}
+
+function HomeEmployee() {
   const { steps, status, requestPermission } = usePedometer();
+  const { user } = useCurrentUser();
   const liveMode = status === 'active';
   const displaySteps = liveMode ? steps : DEMO_STEPS;
   const goalPct = Math.min(100, Math.round((displaySteps / DAILY_GOAL) * 100));
-  const { user } = useCurrentUser();
 
   return (
     <div className="home">

@@ -7,6 +7,7 @@ export function toPublicUser(row) {
     department: row.department,
     role: row.role,
     status: row.status,
+    classId: row.class_id ?? null,
     biometricEnabled: !!row.biometric_enabled,
     points: row.points,
     weeklyActivity: row.weekly_activity,

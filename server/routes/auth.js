@@ -9,7 +9,8 @@ const router = Router();
 const PHONE_RE = /^0\d{8,9}$/;
 
 router.post('/register', (req, res) => {
-  const { phone, username, department, password, biometricEnabled } = req.body || {};
+  const { phone, username, department, password, biometricEnabled, role, classId } = req.body || {};
+  const accountRole = role === 'student' ? 'student' : 'employee';
 
   if (!PHONE_RE.test(String(phone || '').trim())) {
     return res.status(400).json({ error: 'מספר טלפון לא תקין' });
@@ -19,6 +20,9 @@ router.post('/register', (req, res) => {
   }
   if (!password || password.length < 6) {
     return res.status(400).json({ error: 'הסיסמה צריכה להכיל לפחות 6 תווים' });
+  }
+  if (accountRole === 'student' && !classId) {
+    return res.status(400).json({ error: 'נדרשת כיתה' });
   }
 
   const normalizedPhone = phone.trim();
@@ -31,19 +35,21 @@ router.post('/register', (req, res) => {
   }
 
   const passwordHash = bcrypt.hashSync(password, 10);
+  // department is a corporate-account concept; students use class_id instead.
+  const departmentValue = accountRole === 'student' ? '' : (department || '');
 
   let user;
   if (existing) {
     db.prepare(`
-      UPDATE users SET username = ?, department = ?, password_hash = ?, biometric_enabled = ?, status = 'active'
+      UPDATE users SET username = ?, department = ?, role = ?, class_id = ?, password_hash = ?, biometric_enabled = ?, status = 'active'
       WHERE id = ?
-    `).run(username.trim(), department, passwordHash, biometricEnabled ? 1 : 0, existing.id);
+    `).run(username.trim(), departmentValue, accountRole, classId ?? null, passwordHash, biometricEnabled ? 1 : 0, existing.id);
     user = db.prepare('SELECT * FROM users WHERE id = ?').get(existing.id);
   } else {
     const info = db.prepare(`
-      INSERT INTO users (phone, username, department, password_hash, biometric_enabled)
-      VALUES (?, ?, ?, ?, ?)
-    `).run(normalizedPhone, username.trim(), department, passwordHash, biometricEnabled ? 1 : 0);
+      INSERT INTO users (phone, username, department, role, class_id, password_hash, biometric_enabled)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).run(normalizedPhone, username.trim(), departmentValue, accountRole, classId ?? null, passwordHash, biometricEnabled ? 1 : 0);
     user = db.prepare('SELECT * FROM users WHERE id = ?').get(info.lastInsertRowid);
   }
 

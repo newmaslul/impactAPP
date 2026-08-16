@@ -4,6 +4,8 @@ const NAV = [
   { to: '/admin/dashboard', label: 'Dashboard', icon: '📊' },
   { to: '/admin/employees', label: 'עובדים', icon: '👥' },
   { to: '/admin/challenges', label: 'אתגרים', icon: '🎯' },
+  { to: '/admin/scoring-config', label: 'ציון פעילות', icon: '🧮' },
+  { to: '/admin/schools', label: 'בתי ספר', icon: '🏫' },
   { to: '/admin/impact', label: 'Impact', icon: '❤️' },
   { to: '/admin/reports', label: 'דוחות', icon: '📈' },
   { to: '/admin/settings', label: 'הגדרות', icon: '⚙️' },

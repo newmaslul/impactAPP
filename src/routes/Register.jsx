@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useBiometricAuth } from '../hooks/useBiometricAuth.js';
 import { api, setToken } from '../lib/api.js';
@@ -13,10 +13,20 @@ export default function Register() {
 
   const [phone, setPhone] = useState(location.state?.phone ?? '');
   const [username, setUsername] = useState('');
+  const [accountType, setAccountType] = useState('employee'); // 'employee' | 'student'
   const [department, setDepartment] = useState(DEPARTMENTS[0]);
+  const [classes, setClasses] = useState([]);
+  const [classId, setClassId] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    api.adminListClasses().then(({ classes }) => {
+      setClasses(classes);
+      if (classes.length) setClassId(String(classes[0].id));
+    }).catch(() => {});
+  }, []);
 
   const { available: bioAvailable, busy: bioBusy, error: bioError, authenticate } = useBiometricAuth();
   const [biometricEnabled, setBiometricEnabled] = useState(false);
@@ -31,16 +41,26 @@ export default function Register() {
     if (!PHONE_RE.test(phone.trim())) return setError('הכניסו מספר טלפון תקין (לדוגמה 0501234567)');
     if (!username.trim()) return setError('נדרש שם משתמש');
     if (password.length < 6) return setError('הסיסמה צריכה להכיל לפחות 6 תווים');
+    if (accountType === 'student' && !classId) return setError('נדרשת כיתה');
 
     setError('');
     setBusy(true);
     try {
-      const { token } = await api.register({ phone: phone.trim(), username: username.trim(), department, password, biometricEnabled });
+      const { token } = await api.register({
+        phone: phone.trim(),
+        username: username.trim(),
+        password,
+        biometricEnabled,
+        role: accountType,
+        ...(accountType === 'student' ? { classId: Number(classId) } : { department }),
+      });
       setToken(token);
       if (biometricEnabled) setBiometricPhone(phone.trim());
-      // Account created — continue into product onboarding (role, org,
-      // connecting an activity source) before landing in the app.
-      navigate('/onboarding');
+      // Employees continue into the existing product onboarding (role,
+      // org, connecting an activity source). Students skip straight to
+      // their dashboard — that onboarding flow is about corporate
+      // org/role selection, which doesn't apply to a child's account.
+      navigate(accountType === 'student' ? '/app/home' : '/onboarding');
     } catch (err) {
       setError(err.message);
     } finally {
@@ -88,18 +108,48 @@ export default function Register() {
           </div>
 
           <div className="field">
-            <label htmlFor="reg-department">מחלקה</label>
-            <select
-              id="reg-department"
-              className="text-input"
-              value={department}
-              onChange={(e) => setDepartment(e.target.value)}
-            >
-              {DEPARTMENTS.map((d) => (
-                <option key={d} value={d}>{d}</option>
-              ))}
-            </select>
+            <label>סוג חשבון</label>
+            <div className="checkbox-list">
+              <label className="checkbox-row">
+                <input type="radio" name="accountType" checked={accountType === 'employee'} onChange={() => setAccountType('employee')} />
+                <span>עובד/ה</span>
+              </label>
+              <label className="checkbox-row">
+                <input type="radio" name="accountType" checked={accountType === 'student'} onChange={() => setAccountType('student')} />
+                <span>תלמיד/ה</span>
+              </label>
+            </div>
           </div>
+
+          {accountType === 'employee' ? (
+            <div className="field">
+              <label htmlFor="reg-department">מחלקה</label>
+              <select
+                id="reg-department"
+                className="text-input"
+                value={department}
+                onChange={(e) => setDepartment(e.target.value)}
+              >
+                {DEPARTMENTS.map((d) => (
+                  <option key={d} value={d}>{d}</option>
+                ))}
+              </select>
+            </div>
+          ) : (
+            <div className="field">
+              <label htmlFor="reg-class">כיתה</label>
+              <select
+                id="reg-class"
+                className="text-input"
+                value={classId}
+                onChange={(e) => setClassId(e.target.value)}
+              >
+                {classes.map((c) => (
+                  <option key={c.id} value={c.id}>{c.school_name} · {c.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div className="field">
             <label htmlFor="reg-password">סיסמה</label>
