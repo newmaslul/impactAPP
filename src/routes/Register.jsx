@@ -1,20 +1,18 @@
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useBiometricAuth } from '../hooks/useBiometricAuth.js';
-import { saveUser, setCurrentUserEmail, setBiometricUserEmail } from '../lib/userStore.js';
+import { saveUser, setCurrentUserPhone, setBiometricUserPhone } from '../lib/userStore.js';
 import { DEPARTMENTS } from '../lib/departments.js';
 
-const EMAIL_RE = /^\S+@\S+\.\S+$/;
 const PHONE_RE = /^0\d{8,9}$/;
 
 export default function Register() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [email, setEmail] = useState(location.state?.email ?? '');
+  const [phone, setPhone] = useState(location.state?.phone ?? '');
   const [username, setUsername] = useState('');
   const [department, setDepartment] = useState(DEPARTMENTS[0]);
-  const [phone, setPhone] = useState('');
   const [error, setError] = useState('');
 
   const { available: bioAvailable, busy: bioBusy, error: bioError, authenticate } = useBiometricAuth();
@@ -27,14 +25,13 @@ export default function Register() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!EMAIL_RE.test(email.trim())) return setError('הכניסו כתובת אימייל תקינה');
-    if (!username.trim()) return setError('נדרש שם משתמש');
     if (!PHONE_RE.test(phone.trim())) return setError('הכניסו מספר טלפון תקין (לדוגמה 0501234567)');
+    if (!username.trim()) return setError('נדרש שם משתמש');
 
     setError('');
-    const user = saveUser({ email, username: username.trim(), department, phone: phone.trim(), biometricEnabled });
-    setCurrentUserEmail(user.email);
-    if (biometricEnabled) setBiometricUserEmail(user.email);
+    const user = saveUser({ phone: phone.trim(), username: username.trim(), department, biometricEnabled });
+    setCurrentUserPhone(user.phone);
+    if (biometricEnabled) setBiometricUserPhone(user.phone);
 
     // Account created — continue into product onboarding (role, org,
     // connecting an activity source) before landing in the app.
@@ -55,14 +52,15 @@ export default function Register() {
 
         <form className="auth-block" onSubmit={handleSubmit} noValidate>
           <div className="field">
-            <label htmlFor="reg-email">אימייל</label>
+            <label htmlFor="reg-phone">טלפון</label>
             <input
-              id="reg-email"
-              type="email"
+              id="reg-phone"
+              type="tel"
               className="text-input"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              autoComplete="email"
+              placeholder="0501234567"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              autoComplete="tel"
               dir="ltr"
             />
           </div>
@@ -91,19 +89,6 @@ export default function Register() {
                 <option key={d} value={d}>{d}</option>
               ))}
             </select>
-          </div>
-
-          <div className="field">
-            <label htmlFor="reg-phone">מספר טלפון</label>
-            <input
-              id="reg-phone"
-              type="tel"
-              className="text-input"
-              placeholder="0501234567"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              dir="ltr"
-            />
           </div>
 
           {bioAvailable && (

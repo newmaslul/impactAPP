@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useBiometricAuth } from '../hooks/useBiometricAuth.js';
-import { findUserByEmail, setCurrentUserEmail, getBiometricUserEmail } from '../lib/userStore.js';
+import { findUserByPhone, setCurrentUserPhone, getBiometricUserPhone } from '../lib/userStore.js';
 
-const EMAIL_RE = /^\S+@\S+\.\S+$/;
+const PHONE_RE = /^0\d{8,9}$/;
 
 export default function Splash() {
   const navigate = useNavigate();
@@ -53,20 +53,21 @@ export default function Splash() {
 
 function LoginBlock({ onForgot }) {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const { available: bioAvailable, busy: bioBusy, error: bioError, authenticate } = useBiometricAuth();
-  const biometricUserEmail = getBiometricUserEmail();
+  const biometricUserPhone = getBiometricUserPhone();
 
   // No backend exists yet, so "the system" this checks against is this
-  // browser's own localStorage (see lib/userStore.js): a known email logs
-  // straight in, an unrecognized one is sent to register — it never
-  // actually verifies the password against anything, since none is stored.
+  // browser's own localStorage (see lib/userStore.js): a known phone
+  // number logs straight in, an unrecognized one is sent to register — it
+  // never actually verifies the password against anything, since none is
+  // stored.
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!EMAIL_RE.test(email.trim())) {
-      setError('הכניסו כתובת אימייל תקינה');
+    if (!PHONE_RE.test(phone.trim())) {
+      setError('הכניסו מספר טלפון תקין (לדוגמה 0501234567)');
       return;
     }
     if (password.length < 6) {
@@ -74,20 +75,20 @@ function LoginBlock({ onForgot }) {
       return;
     }
     setError('');
-    const existing = findUserByEmail(email);
+    const existing = findUserByPhone(phone);
     if (existing) {
-      setCurrentUserEmail(existing.email);
+      setCurrentUserPhone(existing.phone);
       navigate('/app/home');
     } else {
-      navigate('/register', { state: { email } });
+      navigate('/register', { state: { phone } });
     }
   };
 
   const handleBiometric = async () => {
     const ok = await authenticate();
     if (!ok) return;
-    if (biometricUserEmail) {
-      setCurrentUserEmail(biometricUserEmail);
+    if (biometricUserPhone) {
+      setCurrentUserPhone(biometricUserPhone);
       navigate('/app/home');
     } else {
       navigate('/register');
@@ -97,15 +98,15 @@ function LoginBlock({ onForgot }) {
   return (
     <form className="auth-block" onSubmit={handleSubmit} noValidate>
       <div className="field">
-        <label htmlFor="email">אימייל</label>
+        <label htmlFor="phone">טלפון</label>
         <input
-          id="email"
-          type="email"
+          id="phone"
+          type="tel"
           className="text-input"
-          placeholder="you@example.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          autoComplete="email"
+          placeholder="0501234567"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          autoComplete="tel"
           dir="ltr"
         />
       </div>
@@ -132,7 +133,7 @@ function LoginBlock({ onForgot }) {
 
       <button type="submit" className="btn-primary">התחברות</button>
 
-      {bioAvailable && biometricUserEmail && (
+      {bioAvailable && biometricUserPhone && (
         <>
           <div className="auth-divider">או</div>
           <button
@@ -152,14 +153,14 @@ function LoginBlock({ onForgot }) {
 }
 
 function ForgotPasswordBlock({ onBack }) {
-  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [error, setError] = useState('');
   const [sent, setSent] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!EMAIL_RE.test(email.trim())) {
-      setError('הכניסו כתובת אימייל תקינה');
+    if (!PHONE_RE.test(phone.trim())) {
+      setError('הכניסו מספר טלפון תקין (לדוגמה 0501234567)');
       return;
     }
     setError('');
@@ -170,7 +171,7 @@ function ForgotPasswordBlock({ onBack }) {
     return (
       <div className="auth-block">
         <p className="forgot-success">
-          אם הכתובת <strong dir="ltr">{email}</strong> קיימת במערכת, נשלח אליה קישור לאיפוס סיסמה.
+          אם המספר <strong dir="ltr">{phone}</strong> קיים במערכת, נשלח אליו קוד לאיפוס סיסמה ב-SMS.
         </p>
         <button type="button" className="btn-ghost btn-ghost--block" onClick={onBack}>
           חזרה להתחברות
@@ -182,22 +183,22 @@ function ForgotPasswordBlock({ onBack }) {
   return (
     <form className="auth-block" onSubmit={handleSubmit} noValidate>
       <div className="field">
-        <label htmlFor="forgot-email">אימייל</label>
+        <label htmlFor="forgot-phone">טלפון</label>
         <input
-          id="forgot-email"
-          type="email"
+          id="forgot-phone"
+          type="tel"
           className="text-input"
-          placeholder="you@example.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          autoComplete="email"
+          placeholder="0501234567"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          autoComplete="tel"
           dir="ltr"
         />
       </div>
 
       {error && <p className="form-error">{error}</p>}
 
-      <button type="submit" className="btn-primary">שלח קישור לאיפוס</button>
+      <button type="submit" className="btn-primary">שלח קוד לאיפוס</button>
       <button type="button" className="btn-ghost btn-ghost--block" onClick={onBack}>
         חזרה להתחברות
       </button>

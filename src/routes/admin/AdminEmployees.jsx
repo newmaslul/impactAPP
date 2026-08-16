@@ -1,21 +1,43 @@
 import { useMemo, useState } from 'react';
 import EmployeeInviteForm from './EmployeeInviteForm.jsx';
+import EditEmployeeForm from './EditEmployeeForm.jsx';
 import { formatNumber } from '../../lib/format.js';
 import { DEPARTMENTS } from '../../lib/departments.js';
+import { getUsers, saveUser } from '../../lib/userStore.js';
 
 // Mock roster — will come from the org's account system later.
-const INITIAL_EMPLOYEES = [
-  { id: 1, name: 'איתי כהן', department: 'פיתוח', role: 'employee', points: 12400, weeklyActivity: 92, status: 'active' },
-  { id: 2, name: 'דנה לוי', department: 'שיווק', role: 'manager', points: 11800, weeklyActivity: 88, status: 'active' },
-  { id: 3, name: 'יובל מזרחי', department: 'פיתוח', role: 'employee', points: 9600, weeklyActivity: 95, status: 'active' },
-  { id: 4, name: 'רון אביטן', department: 'מכירות', role: 'employee', points: 8700, weeklyActivity: 71, status: 'active' },
-  { id: 5, name: 'מאיה שפירא', department: 'כספים', role: 'manager', points: 7900, weeklyActivity: 64, status: 'active' },
-  { id: 6, name: 'נועה גולן', department: 'שיווק', role: 'employee', points: 6800, weeklyActivity: 58, status: 'active' },
-  { id: 7, name: 'עידו ברק', department: 'פיתוח', role: 'employee', points: 5400, weeklyActivity: 0, status: 'invited' },
-  { id: 8, name: 'שירה כץ', department: 'מכירות', role: 'employee', points: 4200, weeklyActivity: 40, status: 'active' },
-  { id: 9, name: 'אורי דהן', department: 'כספים', role: 'employee', points: 3100, weeklyActivity: 12, status: 'inactive' },
-  { id: 10, name: 'טל רוזן', department: 'שיווק', role: 'employee', points: 2100, weeklyActivity: 51, status: 'active' },
+const MOCK_EMPLOYEES = [
+  { id: 'mock-1', name: 'איתי כהן', email: 'itai.cohen@company.com', department: 'פיתוח', role: 'employee', points: 12400, weeklyActivity: 92, status: 'active' },
+  { id: 'mock-2', name: 'דנה לוי', email: 'dana.levi@company.com', department: 'שיווק', role: 'manager', points: 11800, weeklyActivity: 88, status: 'active' },
+  { id: 'mock-3', name: 'יובל מזרחי', email: 'yuval.mizrahi@company.com', department: 'פיתוח', role: 'employee', points: 9600, weeklyActivity: 95, status: 'active' },
+  { id: 'mock-4', name: 'רון אביטן', email: 'ron.avitan@company.com', department: 'מכירות', role: 'employee', points: 8700, weeklyActivity: 71, status: 'active' },
+  { id: 'mock-5', name: 'מאיה שפירא', email: 'maya.shapira@company.com', department: 'כספים', role: 'manager', points: 7900, weeklyActivity: 64, status: 'active' },
+  { id: 'mock-6', name: 'נועה גולן', email: 'noa.golan@company.com', department: 'שיווק', role: 'employee', points: 6800, weeklyActivity: 58, status: 'active' },
+  { id: 'mock-7', name: 'עידו ברק', email: 'ido.barak@company.com', department: 'פיתוח', role: 'employee', points: 5400, weeklyActivity: 0, status: 'invited' },
+  { id: 'mock-8', name: 'שירה כץ', email: 'shira.katz@company.com', department: 'מכירות', role: 'employee', points: 4200, weeklyActivity: 40, status: 'active' },
+  { id: 'mock-9', name: 'אורי דהן', email: 'uri.dahan@company.com', department: 'כספים', role: 'employee', points: 3100, weeklyActivity: 12, status: 'inactive' },
+  { id: 'mock-10', name: 'טל רוזן', email: 'tal.rozen@company.com', department: 'שיווק', role: 'employee', points: 2100, weeklyActivity: 51, status: 'active' },
 ];
+
+// Real accounts created via /register on this browser (lib/userStore.js)
+// merge into the same roster, so this screen actually manages the people
+// who signed up on this device — not just the mock data. Accounts are
+// keyed by phone (the login screen's identifier), not email.
+function buildInitialEmployees() {
+  const registered = getUsers().map((u) => ({
+    id: `user-${u.phone}`,
+    name: u.username,
+    phone: u.phone,
+    department: u.department,
+    role: 'employee',
+    points: 0,
+    weeklyActivity: 0,
+    status: 'active',
+    isRegistered: true,
+  }));
+  const registeredPhones = new Set(registered.map((r) => r.phone));
+  return [...registered, ...MOCK_EMPLOYEES.filter((m) => !registeredPhones.has(m.phone))];
+}
 
 function statusMeta(status) {
   if (status === 'active') return { label: 'פעיל', cls: 'status-pill--active' };
@@ -28,8 +50,9 @@ function roleLabel(role) {
 }
 
 export default function AdminEmployees() {
-  const [employees, setEmployees] = useState(INITIAL_EMPLOYEES);
-  const [view, setView] = useState('list'); // 'list' | 'invite'
+  const [employees, setEmployees] = useState(buildInitialEmployees);
+  const [view, setView] = useState('list'); // 'list' | 'invite' | 'edit'
+  const [editingId, setEditingId] = useState(null);
   const [query, setQuery] = useState('');
   const [department, setDepartment] = useState('all');
 
@@ -43,20 +66,51 @@ export default function AdminEmployees() {
 
   const handleInvite = (invite) => {
     setEmployees((prev) => [
-      { id: Date.now(), name: invite.name, department: invite.department, role: invite.role, points: 0, weeklyActivity: 0, status: 'invited' },
+      { id: `invite-${Date.now()}`, name: invite.name, email: invite.email, department: invite.department, role: invite.role, points: 0, weeklyActivity: 0, status: 'invited' },
       ...prev,
     ]);
     setView('list');
+  };
+
+  const editingEmployee = employees.find((e) => e.id === editingId) ?? null;
+
+  const handleSave = (updated) => {
+    setEmployees((prev) => prev.map((e) => (e.id === updated.id ? updated : e)));
+    // Keep the person's own account (lib/userStore.js, used by the mobile
+    // app's Home/Profile) in sync for the one field they share.
+    if (updated.isRegistered && updated.phone) {
+      const existing = getUsers().find((u) => u.phone === updated.phone);
+      if (existing) saveUser({ ...existing, department: updated.department });
+    }
+    setView('list');
+    setEditingId(null);
+  };
+
+  const handleRemove = (id) => {
+    setEmployees((prev) => prev.filter((e) => e.id !== id));
+    setView('list');
+    setEditingId(null);
   };
 
   if (view === 'invite') {
     return <EmployeeInviteForm onCancel={() => setView('list')} onSubmit={handleInvite} />;
   }
 
+  if (view === 'edit' && editingEmployee) {
+    return (
+      <EditEmployeeForm
+        employee={editingEmployee}
+        onCancel={() => { setView('list'); setEditingId(null); }}
+        onSave={handleSave}
+        onRemove={handleRemove}
+      />
+    );
+  }
+
   return (
     <div className="admin-page">
       <div className="admin-page__header">
-        <h1 className="admin-page__title">עובדים</h1>
+        <h1 className="admin-page__title">ניהול משתמשים</h1>
         <button type="button" className="btn-primary admin-page__header-cta" onClick={() => setView('invite')}>
           + הזמן עובד
         </button>
@@ -100,12 +154,13 @@ export default function AdminEmployees() {
                 <th>פעילות השבוע</th>
                 <th>נקודות</th>
                 <th>סטטוס</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="admin-table__empty">לא נמצאו עובדים</td>
+                  <td colSpan={7} className="admin-table__empty">לא נמצאו עובדים</td>
                 </tr>
               ) : (
                 filtered.map((e) => {
@@ -125,6 +180,15 @@ export default function AdminEmployees() {
                       </td>
                       <td className="admin-table__points">{formatNumber(e.points)}</td>
                       <td><span className={`status-pill ${s.cls}`}>{s.label}</span></td>
+                      <td>
+                        <button
+                          type="button"
+                          className="link-btn"
+                          onClick={() => { setEditingId(e.id); setView('edit'); }}
+                        >
+                          ערוך
+                        </button>
+                      </td>
                     </tr>
                   );
                 })
