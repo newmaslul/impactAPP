@@ -11,7 +11,7 @@ import ChallengeDetail from './routes/app/ChallengeDetail.jsx';
 import Group from './routes/app/Group.jsx';
 import Impact from './routes/app/Impact.jsx';
 import ImpactProjectVote from './routes/app/ImpactProjectVote.jsx';
-import ComingSoon from './routes/ComingSoon.jsx';
+import Profile from './routes/app/Profile.jsx';
 
 function OnboardingLayout() {
   return (
@@ -39,10 +39,7 @@ export default function App() {
         <Route path="group" element={<Group />} />
         <Route path="impact" element={<Impact />} />
         <Route path="impact/vote" element={<ImpactProjectVote />} />
-        <Route
-          path="profile"
-          element={<ComingSoon title="הפרופיל שלי בבנייה" description="ההישגים והנתונים האישיים נמצאים כאן בקרוב." />}
-        />
+        <Route path="profile" element={<Profile />} />
       </Route>
     </Routes>
   );

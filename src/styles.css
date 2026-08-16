@@ -767,6 +767,14 @@ button { font-family: inherit; }
   color: var(--ink-soft);
 }
 
+/* Flat variant for stat tiles nested inside another card (e.g. Profile),
+   where the outer card already provides the border/shadow. */
+.stat-tile--plain {
+  border: none;
+  box-shadow: none;
+  padding: 0.4rem;
+}
+
 .task-card__title {
   font-weight: 700;
   font-size: 1.08rem;
@@ -1016,3 +1024,92 @@ button { font-family: inherit; }
   max-width: 30ch;
   line-height: 1.6;
 }
+
+/* ---------- Profile screen ---------- */
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.profile-header__avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--blue-deep), var(--teal-impact));
+  color: var(--white);
+  font-family: 'Heebo', 'Segoe UI', Arial, sans-serif;
+  font-weight: 800;
+  font-size: 1.3rem;
+}
+
+.profile-header__text { flex: 1; min-width: 0; }
+
+.profile-header__name {
+  font-weight: 800;
+  font-size: 1.2rem;
+  color: var(--ink);
+}
+
+.profile-header__level {
+  margin-top: 0.15rem;
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+
+.profile-header__progress { margin-top: 0.7rem; }
+
+/* Achievement badges — the one screen where orange (achievements-only,
+   per PRODUCT_SPEC.md §14) is the primary accent rather than a hint. */
+.badge-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.7rem;
+}
+
+.badge-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: var(--radius-md);
+  background: rgba(255, 138, 61, 0.1);
+  border: 1px solid rgba(255, 138, 61, 0.22);
+}
+
+.badge-chip__icon { font-size: 1.1rem; flex-shrink: 0; }
+
+.badge-chip__label {
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: var(--ink);
+}
+
+/* ---------- Ghost buttons (secondary actions row) ---------- */
+
+.ghost-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem;
+}
+
+.btn-ghost {
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--hairline);
+  background: var(--white);
+  color: var(--ink);
+  font-family: 'Assistant', 'Segoe UI', Arial, sans-serif;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.btn-ghost:hover { border-color: var(--blue-light); background: var(--surface); }
