@@ -32,12 +32,20 @@ html, body, #root {
   height: 100%;
 }
 
+html {
+  /* Primary target is mobile browsers/home-screen installs, not desktop:
+     block the pull-to-refresh/rubber-band gesture and let the app own
+     scrolling like a native screen would. */
+  overscroll-behavior-y: none;
+}
+
 body {
   margin: 0;
   font-family: 'Assistant', 'Segoe UI', Arial, sans-serif;
   background: var(--white);
   color: var(--ink);
   -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
 }
 
 h1, h2, h3 {
@@ -47,13 +55,19 @@ h1, h2, h3 {
 
 p { margin: 0; }
 
-button { font-family: inherit; }
+button {
+  font-family: inherit;
+  touch-action: manipulation; /* removes the ~300ms tap delay / double-tap-zoom */
+}
+
+a { touch-action: manipulation; }
 
 /* ---------- Shared page shell (mobile-first, centered column) ---------- */
 
 .screen {
   position: relative;
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   justify-content: center;
   overflow-x: hidden;
@@ -76,7 +90,8 @@ button { font-family: inherit; }
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  padding: 2.6rem 0 2.4rem;
+  min-height: 100dvh;
+  padding: max(2.6rem, env(safe-area-inset-top)) 0 max(2.4rem, env(safe-area-inset-bottom));
 }
 
 /* ---------- Top bar: back button + step progress ---------- */
@@ -503,6 +518,7 @@ button { font-family: inherit; }
   align-items: center;
   justify-content: center;
   min-height: 100vh;
+  min-height: 100dvh;
   text-align: center;
   gap: 1.6rem;
   padding: 3rem 0;
@@ -590,6 +606,7 @@ button { font-family: inherit; }
 .app-shell {
   position: relative;
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   justify-content: center;
   overflow-x: hidden;
@@ -600,7 +617,7 @@ button { font-family: inherit; }
   position: relative;
   z-index: 1;
   width: min(92vw, 440px);
-  padding: 2.2rem 0 6rem;
+  padding: max(2.2rem, env(safe-area-inset-top)) 0 6rem;
 }
 
 .bottom-nav {
@@ -675,6 +692,45 @@ button { font-family: inherit; }
 .card__meta--emphasis span {
   font-weight: 400;
   color: var(--ink-faint);
+}
+
+.card__meta-flag {
+  color: var(--ink-faint);
+  font-style: italic;
+}
+
+/* ---------- Pedometer permission banner ---------- */
+
+.pedometer-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 1.1rem 1.2rem;
+  background: var(--surface-selected);
+  border-color: rgba(62, 158, 255, 0.25);
+}
+
+.pedometer-banner__icon { font-size: 1.4rem; flex-shrink: 0; }
+.pedometer-banner__text { flex: 1; min-width: 0; }
+
+.pedometer-banner__title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--ink);
+}
+
+.pedometer-banner__desc {
+  margin-top: 0.15rem;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  line-height: 1.5;
+}
+
+.pedometer-banner__cta {
+  width: auto;
+  flex-shrink: 0;
+  padding: 0.7rem 1.1rem;
+  font-size: 0.92rem;
 }
 
 .progressbar {
