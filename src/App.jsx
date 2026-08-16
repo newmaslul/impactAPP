@@ -1,5 +1,6 @@
 import { Routes, Route, Outlet, Navigate } from 'react-router-dom';
 import Splash from './routes/Splash.jsx';
+import Register from './routes/Register.jsx';
 import { OnboardingProvider } from './routes/onboarding/OnboardingContext.jsx';
 import WhoAreYou from './routes/onboarding/WhoAreYou.jsx';
 import Organization from './routes/onboarding/Organization.jsx';
@@ -30,6 +31,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<Splash />} />
+      <Route path="/register" element={<Register />} />
 
       <Route path="/onboarding" element={<OnboardingLayout />}>
         <Route index element={<WhoAreYou />} />

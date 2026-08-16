@@ -1,8 +1,7 @@
 import { useMemo, useState } from 'react';
 import EmployeeInviteForm from './EmployeeInviteForm.jsx';
 import { formatNumber } from '../../lib/format.js';
-
-const DEPARTMENTS = ['פיתוח', 'שיווק', 'מכירות', 'כספים'];
+import { DEPARTMENTS } from '../../lib/departments.js';
 
 // Mock roster — will come from the org's account system later.
 const INITIAL_EMPLOYEES = [

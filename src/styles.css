@@ -1277,6 +1277,13 @@ a { touch-action: manipulation; }
 
 .btn-ghost:disabled { opacity: 0.5; cursor: not-allowed; }
 
+.btn-ghost--done {
+  border-color: rgba(18, 184, 134, 0.35);
+  background: rgba(18, 184, 134, 0.08);
+  color: var(--teal-impact);
+  opacity: 1;
+}
+
 .btn-ghost--block {
   width: 100%;
   display: inline-flex;

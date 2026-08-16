@@ -1,6 +1,5 @@
 import { useState } from 'react';
-
-const DEPARTMENTS = ['פיתוח', 'שיווק', 'מכירות', 'כספים'];
+import { DEPARTMENTS } from '../../lib/departments.js';
 
 const EMAIL_RE = /^\S+@\S+\.\S+$/;
 

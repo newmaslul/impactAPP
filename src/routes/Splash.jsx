@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useBiometricAuth } from '../hooks/useBiometricAuth.js';
+import { findUserByEmail, setCurrentUserEmail, getBiometricUserEmail } from '../lib/userStore.js';
 
 const EMAIL_RE = /^\S+@\S+\.\S+$/;
 
@@ -38,7 +39,7 @@ export default function Splash() {
         {view === 'login' && (
           <p className="auth-switch">
             אין לך חשבון?
-            <button type="button" className="link-btn" onClick={() => navigate('/onboarding')}>
+            <button type="button" className="link-btn" onClick={() => navigate('/register')}>
               צור משתמש חדש
             </button>
           </p>
@@ -55,11 +56,13 @@ function LoginBlock({ onForgot }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const { available: bioAvailable, hasSavedCredential, busy: bioBusy, error: bioError, authenticate } = useBiometricAuth();
+  const { available: bioAvailable, busy: bioBusy, error: bioError, authenticate } = useBiometricAuth();
+  const biometricUserEmail = getBiometricUserEmail();
 
-  // No backend exists yet, so this is a demo login: it validates the form
-  // shape client-side and then goes straight into the app rather than
-  // checking real credentials against a server.
+  // No backend exists yet, so "the system" this checks against is this
+  // browser's own localStorage (see lib/userStore.js): a known email logs
+  // straight in, an unrecognized one is sent to register — it never
+  // actually verifies the password against anything, since none is stored.
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!EMAIL_RE.test(email.trim())) {
@@ -71,12 +74,24 @@ function LoginBlock({ onForgot }) {
       return;
     }
     setError('');
-    navigate('/app/home');
+    const existing = findUserByEmail(email);
+    if (existing) {
+      setCurrentUserEmail(existing.email);
+      navigate('/app/home');
+    } else {
+      navigate('/register', { state: { email } });
+    }
   };
 
   const handleBiometric = async () => {
     const ok = await authenticate();
-    if (ok) navigate('/app/home');
+    if (!ok) return;
+    if (biometricUserEmail) {
+      setCurrentUserEmail(biometricUserEmail);
+      navigate('/app/home');
+    } else {
+      navigate('/register');
+    }
   };
 
   return (
@@ -117,7 +132,7 @@ function LoginBlock({ onForgot }) {
 
       <button type="submit" className="btn-primary">התחברות</button>
 
-      {bioAvailable && (
+      {bioAvailable && biometricUserEmail && (
         <>
           <div className="auth-divider">או</div>
           <button
@@ -127,7 +142,7 @@ function LoginBlock({ onForgot }) {
             disabled={bioBusy}
           >
             <span aria-hidden="true">🔐</span>
-            {bioBusy ? 'מאמת…' : hasSavedCredential ? 'כניסה מהירה עם זיהוי ביומטרי' : 'הפעילו כניסה מהירה ביומטרית'}
+            {bioBusy ? 'מאמת…' : 'כניסה מהירה עם זיהוי ביומטרי'}
           </button>
           {bioError && <p className="form-error">{bioError}</p>}
         </>
