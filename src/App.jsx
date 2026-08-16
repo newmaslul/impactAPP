@@ -14,6 +14,7 @@ import ImpactProjectVote from './routes/app/ImpactProjectVote.jsx';
 import Profile from './routes/app/Profile.jsx';
 import AdminShell from './routes/admin/AdminShell.jsx';
 import Dashboard from './routes/admin/Dashboard.jsx';
+import AdminChallenges from './routes/admin/AdminChallenges.jsx';
 import ComingSoon from './routes/ComingSoon.jsx';
 
 function OnboardingLayout() {
@@ -52,10 +53,7 @@ export default function App() {
           path="employees"
           element={<ComingSoon title="עובדים בבנייה" description="ניהול משתמשים והרשאות נמצא כאן בקרוב." />}
         />
-        <Route
-          path="challenges"
-          element={<ComingSoon title="אתגרים בבנייה" description="יצירה וניהול אתגרים (§12) נמצאים כאן בקרוב." />}
-        />
+        <Route path="challenges" element={<AdminChallenges />} />
         <Route
           path="impact"
           element={<ComingSoon title="Impact בבנייה" description="מעקב תרומות ובחירות פרויקטים ברמת הארגון נמצא כאן בקרוב." />}

@@ -1580,3 +1580,147 @@ a { touch-action: manipulation; }
   .admin-shell__content { padding: 1.2rem; }
   .admin-topbar { padding: 1rem 1.2rem; }
 }
+
+/* ---------- Admin page header (title + primary action) ---------- */
+
+.admin-page__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.admin-page__header-cta { width: auto; padding: 0.75rem 1.3rem; }
+
+/* ---------- Status pills (semantic — kept separate from the brand accent) ---------- */
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.7rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.status-pill--active { background: rgba(18, 184, 134, 0.12); color: var(--teal-impact); }
+.status-pill--scheduled { background: rgba(62, 158, 255, 0.14); color: var(--blue-deep); }
+.status-pill--ended { background: var(--surface); color: var(--ink-faint); }
+
+/* ---------- Scoring weights (§13) ---------- */
+
+.scoring-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.scoring-row {
+  display: grid;
+  grid-template-columns: 9rem 1fr 3rem;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.scoring-row__label { font-weight: 600; color: var(--ink); font-size: 0.94rem; }
+
+.scoring-row__bar {
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.scoring-row__fill {
+  display: block;
+  height: 100%;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(90deg, var(--blue-deep), var(--teal-impact));
+}
+
+.scoring-row__weight {
+  text-align: left;
+  font-weight: 700;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.scoring-note {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--hairline);
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+/* ---------- Admin form (create challenge, §12) ---------- */
+
+.admin-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.3rem;
+  max-width: 560px;
+}
+
+.type-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+}
+
+.date-range-row {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.date-range-row .text-input { flex: 1; }
+.date-range-row__sep { color: var(--ink-faint); }
+
+.field-suffix-row {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.field-suffix-row .text-input { flex: 1; }
+
+.field-suffix {
+  color: var(--ink-soft);
+  font-weight: 600;
+  font-size: 0.92rem;
+  white-space: nowrap;
+}
+
+.checkbox-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  font-size: 0.96rem;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.checkbox-row input[type='checkbox'] {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--blue-deep);
+  cursor: pointer;
+}
+
+.admin-form__actions {
+  display: flex;
+  gap: 0.8rem;
+  justify-content: flex-end;
+}
+
+.admin-form__submit { width: auto; padding: 0.85rem 1.6rem; }
