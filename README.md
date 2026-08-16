@@ -2,42 +2,41 @@
 
 > Move · Connect · Impact — הופכים פעילות אישית להשפעה משותפת
 
-React + Vite app implementing the mobile + admin screens from [PRODUCT_SPEC.md](./PRODUCT_SPEC.md), backed by a real Node/Express + SQLite API in [server/](./server).
+React + Vite app implementing the mobile + admin screens from [PRODUCT_SPEC.md](./PRODUCT_SPEC.md), backed by **Supabase** (Postgres + Edge Functions) in [supabase/](./supabase).
 
-## Develop
+## Backend: Supabase
 
-Two processes: the frontend, and the backend it talks to for auth + the admin employee list.
+- **Database**: Postgres, schema in [supabase/migrations](./supabase/migrations). RLS is enabled on every table with no client-facing policies — only the Edge Functions (using the service_role key, never shipped to the browser) can read/write. The anon/publishable key gets nothing on these tables directly.
+- **Auth**: phone + password (not Supabase's built-in email/OTP-phone auth — kept custom to match the product's phone+password requirement). Password hashing via bcryptjs, sessions via a self-issued JWT (`JWT_SECRET` function secret).
+- **Edge Functions** ([supabase/functions](./supabase/functions)): `auth` (register/login/biometric-login/forgot-password/me), `activity` (sync/today/history/summary/config), `admin-employees`, `admin-schools`, `admin-classes`. Shared scoring logic lives in `supabase/functions/_shared/scoring/` — pure functions (`engine.ts`) plus a Postgres-backed service layer (`service.ts`).
+- **Scoring**: see `_shared/scoring/engine.ts` for the activity-score formula (steps/active-minutes/distance/vigorous-minutes, weighted, config-driven) and `_shared/scoring/validation.ts` for anti-manipulation checks (clamping, jump detection, cross-metric consistency).
+
+### Deploying backend changes
 
 ```bash
-# terminal 1 — backend (http://localhost:4000)
-cd server
-npm install
-npm run dev
+export SUPABASE_ACCESS_TOKEN=<personal access token>
+supabase db push                          # apply new migrations
+supabase functions deploy <function-name> --no-verify-jwt
+supabase secrets set JWT_SECRET=<value>   # only needed once / on rotation
+```
 
-# terminal 2 — frontend (http://localhost:5173)
+## Frontend
+
+```bash
 npm install
 npm run dev
 ```
 
-The frontend calls `http://localhost:4000` by default; copy `.env.example` to `.env` and set `VITE_API_URL` to point it elsewhere.
+Talks to Supabase by default (see `src/lib/api.js`); no local backend process needed. Copy `.env.example` to `.env` to point at a different Supabase project.
 
-## Backend
-
-- **Auth**: phone + password, real bcrypt hashing, JWT sessions (`POST /api/auth/register`, `/login`, `/forgot-password`, `GET /me`).
-- **Admin**: `GET/PATCH/DELETE /api/admin/employees`, `POST /api/admin/employees/invite` — currently open (no admin-role check yet); see the comment in `server/routes/employees.js` before deploying this for real.
-- **Storage**: SQLite via Node's built-in `node:sqlite` (no native build step). The database file lives at `server/data/maslul.db` and is gitignored.
-- **Biometric login**: `POST /api/auth/biometric-login` is a documented simplification — it trusts the client's local WebAuthn check rather than verifying a signed assertion server-side. See the comment in `server/routes/auth.js`.
-
-Copy `server/.env.example` to `server/.env` to set `JWT_SECRET` and `PORT` for a real deployment (the code falls back to dev defaults otherwise).
-
-## Deploy
-
-**Frontend:**
+## Deploy (frontend)
 
 ```bash
 npm run deploy
 ```
 
-Builds the app and publishes `dist/` to the `gh-pages` branch, which GitHub Pages serves at the live URL. Rebuild with `VITE_API_URL` set to your hosted backend before deploying, or the live site will try to reach `localhost:4000` and fail.
+Builds and publishes `dist/` to the `gh-pages` branch, which GitHub Pages serves at the live URL.
 
-**Backend:** not deployed anywhere public yet — it only runs locally. It needs a host that can run a persistent Node process (Render, Railway, Fly.io, etc.); GitHub Pages only serves static files.
+## Legacy: server/ (Express + SQLite, Fly.io)
+
+[server/](./server) is an earlier, fully-working iteration of this same API (Node/Express + SQLite, deployed to Fly.io) — superseded by the Supabase functions above but left in the repo for reference. The live frontend no longer talks to it.

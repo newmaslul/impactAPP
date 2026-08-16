@@ -1,0 +1,19 @@
+app = "maslul-impact-api"
+primary_region = "iad"
+
+[build]
+
+[[mounts]]
+  source = "maslul_data"
+  destination = "/app/data"
+
+[http_service]
+  internal_port = 4000
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"
