@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useDeviceSensorAdapter } from '../lib/healthAdapters/deviceSensorAdapter.js';
+import { useNativeHealthAdapter } from '../lib/healthAdapters/nativeHealthAdapter.js';
 import { api } from '../lib/api.js';
 
 // Throttle: the sensor can update every render, but there's no reason to
@@ -16,26 +17,39 @@ const MIN_SYNC_INTERVAL_MS = 6000;
  * banner) plus liveSteps — the raw on-device count, unthrottled, so the
  * UI can show it instantly instead of waiting on a round trip to the
  * server and back.
+ *
+ * Both adapters are called unconditionally, every render — React's rules
+ * of hooks (same reasoning already documented in routes/app/Home.jsx for
+ * why HomeStudent/HomeEmployee are split into separate components).
+ * `useNativeHealthAdapter` reports itself unavailable immediately unless
+ * running inside the Capacitor native shell (see CAPACITOR.md), so this
+ * is a safe no-op for anyone using the plain website — the accelerometer
+ * fallback below is unchanged in that case.
  */
 export function useActivitySync() {
+  const native = useNativeHealthAdapter();
   const device = useDeviceSensorAdapter();
+  // Real OS-level step data beats the in-browser accelerometer estimate
+  // whenever it's actually reachable (native shell + authorized).
+  const active = native.available ? native : device;
+
   const lastSyncedSteps = useRef(null);
   const lastSyncAt = useRef(0);
 
   useEffect(() => {
-    if (!device.reading) return;
+    if (!active.reading) return;
     const now = Date.now();
-    const stepsChanged = device.reading.steps !== lastSyncedSteps.current;
+    const stepsChanged = active.reading.steps !== lastSyncedSteps.current;
     const throttleOk = now - lastSyncAt.current > MIN_SYNC_INTERVAL_MS;
     if (!stepsChanged || !throttleOk) return;
 
-    lastSyncedSteps.current = device.reading.steps;
+    lastSyncedSteps.current = active.reading.steps;
     lastSyncAt.current = now;
-    api.activitySync({ source: device.id, ...device.reading }).catch(() => {
+    api.activitySync({ source: active.id, ...active.reading }).catch(() => {
       // Best-effort background sync — a failed sync just means the
       // dashboard shows slightly stale data until the next successful one.
     });
-  }, [device.reading, device.id]);
+  }, [active.reading, active.id]);
 
-  return { ...device, liveSteps: device.reading?.steps ?? null };
+  return { ...active, liveSteps: active.reading?.steps ?? null };
 }

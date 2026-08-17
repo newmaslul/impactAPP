@@ -7,15 +7,24 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "deploy": "vite build && gh-pages -d dist"
+    "deploy": "vite build && gh-pages -d dist",
+    "build:capacitor": "cross-env CAP_BUILD=1 vite build",
+    "cap:sync": "npm run build:capacitor && npx cap sync android",
+    "cap:open:android": "npx cap open android"
   },
   "dependencies": {
+    "@capacitor/core": "^8.5.0",
+    "@capgo/capacitor-health": "^8.10.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.26.2"
   },
   "devDependencies": {
+    "@capacitor/android": "^8.5.0",
+    "@capacitor/cli": "^8.5.0",
+    "@capacitor/ios": "^8.5.0",
     "@vitejs/plugin-react": "^4.3.4",
+    "cross-env": "^10.1.0",
     "gh-pages": "^6.3.0",
     "vite": "^5.4.11"
   },

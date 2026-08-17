@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">מסלול IMPACT</string>
+    <string name="title_activity_main">מסלול IMPACT</string>
+    <string name="package_name">com.maslulimpact.app</string>
+    <string name="custom_url_scheme">com.maslulimpact.app</string>
+</resources>

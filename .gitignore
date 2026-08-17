@@ -5,3 +5,9 @@ dist
 server/data/*.db*
 .env
 .claude/settings.local.json
+
+# Capacitor's intermediate web-asset build (npm run build:capacitor) —
+# copied into android/app/src/main/assets/public by `cap sync`, which is
+# itself already ignored by android/.gitignore (Capacitor scaffolds that
+# file automatically; only this root-level output dir needs listing here).
+dist-capacitor
