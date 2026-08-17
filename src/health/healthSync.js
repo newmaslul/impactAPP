@@ -21,3 +21,18 @@ export async function syncHealthData(adapter) {
   await api.activitySync({ source: adapter.id, ...adapter.reading });
   return api.activitySummary();
 }
+
+/**
+ * Deletes every stored raw_daily_metrics row for this adapter's source
+ * (docs/HEALTH_PRIVACY.md's self-service delete) and returns the
+ * recomputed today's score. This only removes what this app stored —
+ * it cannot revoke the underlying OS-level HealthKit/Health Connect
+ * permission (see healthService.js's disconnectHealth() for that half).
+ * @param {{id: string}} adapter
+ */
+export async function deleteHealthData(adapter) {
+  if (!adapter?.id) {
+    throw new Error('אין מקור מחובר למחיקה');
+  }
+  return api.deleteHealthData(adapter.id);
+}

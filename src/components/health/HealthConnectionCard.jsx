@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNativeHealthAdapter } from '../../lib/healthAdapters/nativeHealthAdapter.js';
-import { getHealthConnectionStatus, connectHealth, getTodaySteps } from '../../health/healthService.js';
-import { syncHealthData } from '../../health/healthSync.js';
+import { getHealthConnectionStatus, connectHealth, disconnectHealth, getTodaySteps } from '../../health/healthService.js';
+import { syncHealthData, deleteHealthData } from '../../health/healthSync.js';
 import { CONNECTION_STATUS } from '../../health/healthTypes.js';
 import HealthStatus from './HealthStatus.jsx';
 import SyncProgress from './SyncProgress.jsx';
@@ -21,6 +21,9 @@ export default function HealthConnectionCard() {
   const [syncing, setSyncing] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState(null);
   const [error, setError] = useState('');
+  const [confirmingDisconnect, setConfirmingDisconnect] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [disconnectNotice, setDisconnectNotice] = useState('');
 
   const status = getHealthConnectionStatus(adapter, { connecting, syncing });
   const steps = getTodaySteps(adapter);
@@ -47,6 +50,21 @@ export default function HealthConnectionCard() {
       setError(err.message);
     } finally {
       setSyncing(false);
+    }
+  };
+
+  const handleConfirmDisconnect = async () => {
+    setError('');
+    setDeleting(true);
+    try {
+      await deleteHealthData(adapter);
+      setLastSyncedAt(null);
+      setConfirmingDisconnect(false);
+      setDisconnectNotice(disconnectHealth().instructions);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -98,6 +116,28 @@ export default function HealthConnectionCard() {
           >
             {status === CONNECTION_STATUS.SYNCING ? 'מסנכרן…' : 'סנכרן עכשיו'}
           </button>
+
+          {!confirmingDisconnect && !disconnectNotice && (
+            <button type="button" className="link-btn health-card__disconnect" onClick={() => setConfirmingDisconnect(true)}>
+              נתקו ומחקו את נתוני הבריאות שלי
+            </button>
+          )}
+
+          {confirmingDisconnect && (
+            <div className="health-card__confirm">
+              <p className="card__meta">בטוחים? זה ימחק את כל היסטוריית הצעדים שנשמרה מאפליקציית הבריאות (לא ניתן לשחזר).</p>
+              <div className="health-card__confirm-actions">
+                <button type="button" className="btn-ghost" onClick={() => setConfirmingDisconnect(false)} disabled={deleting}>
+                  ביטול
+                </button>
+                <button type="button" className="btn-primary" onClick={handleConfirmDisconnect} disabled={deleting}>
+                  {deleting ? 'מוחקים…' : 'כן, מחקו'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {disconnectNotice && <p className="card__meta">הנתונים נמחקו. {disconnectNotice}</p>}
         </>
       )}
 

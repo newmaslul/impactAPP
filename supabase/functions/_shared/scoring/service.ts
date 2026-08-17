@@ -14,6 +14,21 @@ import {
 import { validateReading } from './validation.ts';
 import { todayStr, addDays, parseDate, formatDate } from './dates.ts';
 
+/**
+ * Self-service "disconnect and delete my health data" (docs/HEALTH_PRIVACY.md):
+ * deletes every raw_daily_metrics row a user has for one source — all
+ * dates, not just today. Historical daily_scores rows are deliberately
+ * NOT retroactively recalculated (same principle already applied to
+ * scoring_config changes: past scores stay reproducible under whatever
+ * data/config was effective that day) — only today's score is
+ * recomputed by the caller afterward, so the dashboard reflects the
+ * removal immediately without silently rewriting history.
+ */
+export async function deleteRawMetricsForSource(userId: number, source: string) {
+  const { error } = await supabaseAdmin.from('raw_daily_metrics').delete().eq('user_id', userId).eq('source', source);
+  if (error) throw error;
+}
+
 export async function getEffectiveConfig(dateStr: string) {
   const { data, error } = await supabaseAdmin
     .from('scoring_config')

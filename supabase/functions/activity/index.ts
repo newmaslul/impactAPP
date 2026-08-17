@@ -3,7 +3,7 @@
 import { corsHeaders, handleOptions, json } from '../_shared/cors.ts';
 import { supabaseAdmin } from '../_shared/supabaseAdmin.ts';
 import { getUserIdFromRequest, AuthError } from '../_shared/auth.ts';
-import { upsertRawMetrics, recomputeDailyScore, getDailyScore, getHistory, getSummary, getEffectiveConfig } from '../_shared/scoring/service.ts';
+import { upsertRawMetrics, recomputeDailyScore, deleteRawMetricsForSource, getDailyScore, getHistory, getSummary, getEffectiveConfig } from '../_shared/scoring/service.ts';
 import { todayStr } from '../_shared/scoring/dates.ts';
 
 const SOURCES = ['device_sensor', 'apple_health', 'health_connect', 'fitbit', 'garmin', 'manual'];
@@ -21,6 +21,7 @@ Deno.serve(async (req) => {
     if (path.endsWith('/summary') && req.method === 'GET') return await handleSummary(req);
     if (path.endsWith('/config') && req.method === 'GET') return await handleGetConfig();
     if (path.endsWith('/config') && req.method === 'PUT') return await handleUpdateConfig(req);
+    if (path.endsWith('/health-data') && req.method === 'DELETE') return await handleDeleteHealthData(req);
     return json({ error: 'Not found' }, 404);
   } catch (err) {
     if (err instanceof AuthError) return json({ error: err.message }, 401);
@@ -109,4 +110,19 @@ async function handleUpdateConfig(req: Request) {
   if (error) throw error;
 
   return json({ config: data }, 201);
+}
+
+// Self-service "disconnect and delete my health data" (docs/HEALTH_PRIVACY.md).
+// Scoped to one source at a time — deleting a user's Health Connect
+// history should never touch their manually-entered or device_sensor
+// readings, which are separate rows entirely.
+async function handleDeleteHealthData(req: Request) {
+  const userId = getUserIdFromRequest(req);
+  const source = new URL(req.url).searchParams.get('source');
+  if (!SOURCES.includes(source || '')) {
+    return json({ error: `source חייב להיות אחד מ: ${SOURCES.join(', ')}` }, 400);
+  }
+  await deleteRawMetricsForSource(userId, source!);
+  const dailyScore = await recomputeDailyScore(userId, todayStr());
+  return json({ ok: true, dailyScore });
 }

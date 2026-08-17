@@ -62,6 +62,7 @@ export const api = {
   activitySummary: () => request('/activity/summary', { auth: true }),
   activityConfig: () => request('/activity/config'),
   updateActivityConfig: (payload) => request('/activity/config', { method: 'PUT', body: payload }),
+  deleteHealthData: (source) => request(`/activity/health-data?source=${encodeURIComponent(source)}`, { method: 'DELETE', auth: true }),
 
   adminListSchools: () => request('/admin-schools'),
   adminCreateSchool: (payload) => request('/admin-schools', { method: 'POST', body: payload }),
