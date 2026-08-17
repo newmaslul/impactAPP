@@ -38,6 +38,10 @@ export default function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    // See Splash.jsx's LoginBlock.handleSubmit for why: iOS Safari ties
+    // "shake to undo" to whichever text input last had focus, and an SPA
+    // route change doesn't clear that on its own.
+    document.activeElement?.blur();
     if (!PHONE_RE.test(phone.trim())) return setError('הכניסו מספר טלפון תקין (לדוגמה 0501234567)');
     if (!username.trim()) return setError('נדרש שם משתמש');
     if (password.length < 6) return setError('הסיסמה צריכה להכיל לפחות 6 תווים');

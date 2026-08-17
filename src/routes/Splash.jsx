@@ -63,6 +63,15 @@ function LoginBlock({ onForgot }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    // iOS Safari/WKWebView keeps a "shake to undo" edit history tied to
+    // whichever text input last had focus — since this is a single-page
+    // app, navigating away doesn't reload the page and clear it, so a
+    // phone/password field typed into here can still pop an "Undo
+    // Typing" alert later on a completely different screen the first
+    // time the device is shaken/moved. Blurring here, before the field
+    // is unmounted by the route change, releases that native edit
+    // session so it doesn't linger.
+    document.activeElement?.blur();
     if (!PHONE_RE.test(phone.trim())) return setError('הכניסו מספר טלפון תקין (לדוגמה 0501234567)');
     if (password.length < 6) return setError('הסיסמה צריכה להכיל לפחות 6 תווים');
 
@@ -87,6 +96,7 @@ function LoginBlock({ onForgot }) {
   };
 
   const handleBiometric = async () => {
+    document.activeElement?.blur(); // see handleSubmit's comment above
     const ok = await authenticate();
     if (!ok || !biometricPhone) return;
     try {
@@ -163,6 +173,7 @@ function ForgotPasswordBlock({ onBack }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    document.activeElement?.blur(); // see LoginBlock's handleSubmit comment above
     if (!PHONE_RE.test(phone.trim())) return setError('הכניסו מספר טלפון תקין (לדוגמה 0501234567)');
 
     setError('');
