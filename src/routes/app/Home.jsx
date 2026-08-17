@@ -1,4 +1,5 @@
 import ProgressBar from '../../components/ProgressBar.jsx';
+import PedometerBanner from '../../components/PedometerBanner.jsx';
 import { usePedometer } from '../../hooks/usePedometer.js';
 import { useCurrentUser } from '../../context/CurrentUserContext.jsx';
 import HomeStudent from './HomeStudent.jsx';
@@ -37,29 +38,7 @@ function HomeEmployee() {
     <div className="home">
       <h1 className="home__greeting">שלום {user.username} 👋</h1>
 
-      {(status === 'idle' || status === 'denied') && (
-        <section className="card pedometer-banner">
-          <span className="pedometer-banner__icon" aria-hidden="true">📍</span>
-          <div className="pedometer-banner__text">
-            {status === 'denied' ? (
-              <>
-                <p className="pedometer-banner__title">הגישה למד הצעדים נחסמה</p>
-                <p className="pedometer-banner__desc">אפשרו גישה לתנועה בהגדרות הדפדפן כדי לספור צעדים בזמן אמת.</p>
-              </>
-            ) : (
-              <>
-                <p className="pedometer-banner__title">מד הצעדים כבוי</p>
-                <p className="pedometer-banner__desc">הפעילו כדי לספור את הצעדים שלכם היום ישירות מהטלפון.</p>
-              </>
-            )}
-          </div>
-          {status === 'idle' && (
-            <button type="button" className="btn-primary pedometer-banner__cta" onClick={requestPermission}>
-              הפעל מד צעדים
-            </button>
-          )}
-        </section>
-      )}
+      <PedometerBanner status={status} requestPermission={requestPermission} />
 
       <section className="card card--hero">
         <p className="card__label">המסלול שלי היום</p>

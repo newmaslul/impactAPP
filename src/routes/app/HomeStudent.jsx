@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ScoreRing from '../../components/ScoreRing.jsx';
+import PedometerBanner from '../../components/PedometerBanner.jsx';
 import { useActivitySync } from '../../hooks/useActivitySync.js';
 import { useCurrentUser } from '../../context/CurrentUserContext.jsx';
 import { api } from '../../lib/api.js';
@@ -37,29 +38,7 @@ export default function HomeStudent() {
     <div className="home">
       <h1 className="home__greeting">שלום {user.username} 👋</h1>
 
-      {(sensorStatus === 'idle' || sensorStatus === 'denied') && (
-        <section className="card pedometer-banner">
-          <span className="pedometer-banner__icon" aria-hidden="true">📍</span>
-          <div className="pedometer-banner__text">
-            {sensorStatus === 'denied' ? (
-              <>
-                <p className="pedometer-banner__title">הגישה למד הצעדים נחסמה</p>
-                <p className="pedometer-banner__desc">אפשרו גישה לתנועה בהגדרות הדפדפן כדי לספור פעילות בזמן אמת.</p>
-              </>
-            ) : (
-              <>
-                <p className="pedometer-banner__title">מד הצעדים כבוי</p>
-                <p className="pedometer-banner__desc">הפעילו כדי לספור את הצעדים שלכם היום ישירות מהטלפון.</p>
-              </>
-            )}
-          </div>
-          {sensorStatus === 'idle' && (
-            <button type="button" className="btn-primary pedometer-banner__cta" onClick={requestPermission}>
-              הפעל מד צעדים
-            </button>
-          )}
-        </section>
-      )}
+      <PedometerBanner status={sensorStatus} requestPermission={requestPermission} />
 
       {error && <p className="form-error">{error}</p>}
 
