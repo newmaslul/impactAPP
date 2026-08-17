@@ -9,7 +9,12 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 // survives a refresh.
 
 const GRAVITY_SMOOTHING = 0.9; // how slowly the gravity baseline adapts
-const STEP_THRESHOLD = 1.2; // m/s² of leftover motion to register as a step
+// m/s² of leftover motion to register as a step. Lowered from an initial
+// 1.2 after real-device testing showed hand-held walking (phone actively
+// watched, not pocketed) produces a gentler signal than the original
+// value assumed — this is a best-effort tuning, not a calibrated value;
+// adjust further based on real feedback.
+const STEP_THRESHOLD = 0.9;
 const STEP_DEBOUNCE_MS = 300; // minimum time between two counted steps
 const STORAGE_PREFIX = 'maslul:steps:';
 const AUTO_ENABLE_KEY = 'maslul:pedometerAutoEnable';

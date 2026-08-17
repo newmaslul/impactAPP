@@ -6,7 +6,7 @@ import { useActivitySync } from '../../hooks/useActivitySync.js';
 import { useCurrentUser } from '../../context/CurrentUserContext.jsx';
 import { api } from '../../lib/api.js';
 
-const REFRESH_INTERVAL_MS = 30000;
+const REFRESH_INTERVAL_MS = 8000;
 
 const METRIC_META = [
   { key: 'steps', label: 'צעדים', icon: '👣', unit: '', valueKey: 'steps_value', scoreKey: 'steps_score', missingKey: 'steps_missing', weightKey: 'steps_weight' },
@@ -18,7 +18,7 @@ const METRIC_META = [
 export default function HomeStudent() {
   const navigate = useNavigate();
   const { user } = useCurrentUser();
-  const { status: sensorStatus, requestPermission } = useActivitySync();
+  const { status: sensorStatus, requestPermission, liveSteps } = useActivitySync();
   const [summary, setSummary] = useState(null);
   const [config, setConfig] = useState(null);
   const [error, setError] = useState('');
@@ -56,8 +56,13 @@ export default function HomeStudent() {
 
           <div className="stat-grid stat-grid--4">
             {METRIC_META.map((m) => {
-              const value = summary.today[m.valueKey];
-              const missing = summary.today[m.missingKey];
+              // Steps show the live on-device count instantly while
+              // walking, rather than waiting on the throttled sync +
+              // poll round trip — everything else still comes from the
+              // last synced score, since there's no live source for them.
+              const live = m.key === 'steps' && sensorStatus === 'active' && liveSteps != null;
+              const value = live ? liveSteps : summary.today[m.valueKey];
+              const missing = live ? false : summary.today[m.missingKey];
               const score = summary.today[m.scoreKey];
               const weight = config?.[m.weightKey];
               return (

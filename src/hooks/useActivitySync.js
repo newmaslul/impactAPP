@@ -3,15 +3,19 @@ import { useDeviceSensorAdapter } from '../lib/healthAdapters/deviceSensorAdapte
 import { api } from '../lib/api.js';
 
 // Throttle: the sensor can update every render, but there's no reason to
-// hit the network more than about once every 30s.
-const MIN_SYNC_INTERVAL_MS = 30000;
+// hit the network more than about once every few seconds. Kept short (not
+// 30s+) so the synced score doesn't lag noticeably behind someone
+// actually watching the number while they walk.
+const MIN_SYNC_INTERVAL_MS = 6000;
 
 /**
  * Watches the live device-sensor reading and pushes it to
  * POST /api/activity/sync whenever it changes meaningfully — the
  * dashboard doesn't need to poll; it just re-fetches the summary after a
- * sync lands. Returns the adapter's own status so the caller can still
- * show the "enable pedometer" permission banner.
+ * sync lands. Returns the adapter's own status (for the permission
+ * banner) plus liveSteps — the raw on-device count, unthrottled, so the
+ * UI can show it instantly instead of waiting on a round trip to the
+ * server and back.
  */
 export function useActivitySync() {
   const device = useDeviceSensorAdapter();
@@ -33,5 +37,5 @@ export function useActivitySync() {
     });
   }, [device.reading, device.id]);
 
-  return device;
+  return { ...device, liveSteps: device.reading?.steps ?? null };
 }
