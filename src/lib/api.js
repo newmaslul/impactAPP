@@ -77,4 +77,11 @@ export const api = {
   adminCreateContent: (payload) => request('/admin-content', { method: 'POST', body: payload }),
   adminUpdateContent: (id, payload) => request(`/admin-content/${id}`, { method: 'PATCH', body: payload }),
   adminDeleteContent: (id) => request(`/admin-content/${id}`, { method: 'DELETE' }),
+
+  syncSleepSamples: (samples) => request('/sleep/samples', { method: 'POST', body: { samples }, auth: true }),
+  sleepToday: () => request('/sleep/today', { auth: true }),
+  sleepHistory: (days = 30) => request(`/sleep/history?days=${days}`, { auth: true }),
+  sleepSummary: () => request('/sleep/summary', { auth: true }),
+  sleepConfig: () => request('/sleep/config'),
+  updateSleepConfig: (payload) => request('/sleep/config', { method: 'PUT', body: payload }),
 };

@@ -838,6 +838,22 @@ a { touch-action: manipulation; }
   font-size: 0.92rem;
 }
 
+/* ---------- Sleep card ---------- */
+
+.sleep-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.4rem;
+}
+
+.sleep-card__cta {
+  margin-top: 0.9rem;
+  width: auto;
+  padding: 0.6rem 1rem;
+  font-size: 0.88rem;
+}
+
 .progressbar {
   height: 10px;
   border-radius: var(--radius-pill);

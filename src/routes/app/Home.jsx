@@ -1,8 +1,14 @@
+import { useEffect, useState } from 'react';
 import ProgressBar from '../../components/ProgressBar.jsx';
 import PedometerBanner from '../../components/PedometerBanner.jsx';
+import SleepCard from '../../components/SleepCard.jsx';
 import { usePedometer } from '../../hooks/usePedometer.js';
+import { useSleepSensor } from '../../hooks/useSleepSensor.js';
 import { useCurrentUser } from '../../context/CurrentUserContext.jsx';
+import { api } from '../../lib/api.js';
 import HomeStudent from './HomeStudent.jsx';
+
+const SLEEP_REFRESH_INTERVAL_MS = 8000;
 
 // Mock data — will come from the connected activity source + backend later.
 // Steps are the exception: those come live from the phone's accelerometer
@@ -11,7 +17,6 @@ import HomeStudent from './HomeStudent.jsx';
 const DEMO_STEPS = 7420;
 const DAILY_GOAL = 8000;
 const ACTIVITY_MIN = 34;
-const SLEEP = '7:18';
 const TASK = { title: 'הליכה של 20 דקות', subtitle: 'עם עובד מהצוות', points: 100 };
 const TEAM = { points: 78420, goal: 100000 };
 
@@ -29,10 +34,23 @@ export default function Home() {
 
 function HomeEmployee() {
   const { steps, status, requestPermission } = usePedometer();
+  const { status: sleepSensorStatus, requestPermission: requestSleepPermission } = useSleepSensor();
   const { user } = useCurrentUser();
   const liveMode = status === 'active';
   const displaySteps = liveMode ? steps : DEMO_STEPS;
   const goalPct = Math.min(100, Math.round((displaySteps / DAILY_GOAL) * 100));
+
+  const [sleepSummary, setSleepSummary] = useState(null);
+  useEffect(() => {
+    const load = () => {
+      api.sleepSummary().then(setSleepSummary).catch(() => {
+        // Best-effort — a failed sleep fetch shouldn't block the rest of the dashboard.
+      });
+    };
+    load();
+    const id = setInterval(load, SLEEP_REFRESH_INTERVAL_MS);
+    return () => clearInterval(id);
+  }, []);
 
   return (
     <div className="home">
@@ -53,18 +71,13 @@ function HomeEmployee() {
         </p>
       </section>
 
-      <div className="stat-grid">
-        <div className="card stat-tile">
-          <span className="stat-tile__icon" aria-hidden="true">❤️</span>
-          <p className="stat-tile__value">{ACTIVITY_MIN} דק'</p>
-          <p className="stat-tile__label">פעילות</p>
-        </div>
-        <div className="card stat-tile">
-          <span className="stat-tile__icon" aria-hidden="true">😴</span>
-          <p className="stat-tile__value">{SLEEP}</p>
-          <p className="stat-tile__label">שינה</p>
-        </div>
+      <div className="card stat-tile">
+        <span className="stat-tile__icon" aria-hidden="true">❤️</span>
+        <p className="stat-tile__value">{ACTIVITY_MIN} דק'</p>
+        <p className="stat-tile__label">פעילות</p>
       </div>
+
+      <SleepCard session={sleepSummary?.session} sensorStatus={sleepSensorStatus} requestPermission={requestSleepPermission} />
 
       <section className="card task-card">
         <p className="card__label">🎯 משימת היום</p>

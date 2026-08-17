@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ScoreRing from '../../components/ScoreRing.jsx';
 import PedometerBanner from '../../components/PedometerBanner.jsx';
+import SleepCard from '../../components/SleepCard.jsx';
 import { useActivitySync } from '../../hooks/useActivitySync.js';
+import { useSleepSensor } from '../../hooks/useSleepSensor.js';
 import { useCurrentUser } from '../../context/CurrentUserContext.jsx';
 import { api } from '../../lib/api.js';
 
@@ -19,19 +21,32 @@ export default function HomeStudent() {
   const navigate = useNavigate();
   const { user } = useCurrentUser();
   const { status: sensorStatus, requestPermission, liveSteps } = useActivitySync();
+  const { status: sleepSensorStatus, requestPermission: requestSleepPermission } = useSleepSensor();
   const [summary, setSummary] = useState(null);
   const [config, setConfig] = useState(null);
+  const [sleepSummary, setSleepSummary] = useState(null);
   const [error, setError] = useState('');
 
   const loadSummary = () => {
     api.activitySummary().then(setSummary).catch((err) => setError(err.message));
   };
 
+  const loadSleepSummary = () => {
+    api.sleepSummary().then(setSleepSummary).catch(() => {
+      // Best-effort — a failed sleep fetch shouldn't block the rest of the dashboard.
+    });
+  };
+
   useEffect(() => {
     api.activityConfig().then(({ config }) => setConfig(config)).catch(() => {});
     loadSummary();
+    loadSleepSummary();
     const id = setInterval(loadSummary, REFRESH_INTERVAL_MS);
-    return () => clearInterval(id);
+    const sleepId = setInterval(loadSleepSummary, REFRESH_INTERVAL_MS);
+    return () => {
+      clearInterval(id);
+      clearInterval(sleepId);
+    };
   }, []);
 
   return (
@@ -46,13 +61,15 @@ export default function HomeStudent() {
         <>
           <section className="card card--hero score-hero">
             <p className="card__label">הציון שלי היום</p>
-            <ScoreRing value={summary.today.activity_score} label="מתוך 100" />
+            <ScoreRing value={sleepSummary?.dailyScore ?? summary.today.activity_score} label="מתוך 100" />
             {summary.deltaVsYesterday != null && (
               <p className={`score-hero__delta ${summary.deltaVsYesterday >= 0 ? 'score-hero__delta--up' : 'score-hero__delta--down'}`}>
                 {summary.deltaVsYesterday >= 0 ? '↑' : '↓'} {Math.abs(summary.deltaVsYesterday)} לעומת אתמול
               </p>
             )}
           </section>
+
+          <SleepCard session={sleepSummary?.session} sensorStatus={sleepSensorStatus} requestPermission={requestSleepPermission} />
 
           <div className="stat-grid stat-grid--4">
             {METRIC_META.map((m) => {
