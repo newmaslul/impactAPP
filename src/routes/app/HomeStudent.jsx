@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import ScoreRing from '../../components/ScoreRing.jsx';
 import PedometerBanner from '../../components/PedometerBanner.jsx';
 import SleepCard from '../../components/SleepCard.jsx';
+import HealthConnectionCard from '../../components/health/HealthConnectionCard.jsx';
 import { useActivitySync } from '../../hooks/useActivitySync.js';
 import { useSleepSensor } from '../../hooks/useSleepSensor.js';
 import { useCurrentUser } from '../../context/CurrentUserContext.jsx';
@@ -54,6 +55,7 @@ export default function HomeStudent() {
       <h1 className="home__greeting">שלום {user.username} 👋</h1>
 
       <PedometerBanner status={sensorStatus} requestPermission={requestPermission} />
+      <HealthConnectionCard />
 
       {error && <p className="form-error">{error}</p>}
 

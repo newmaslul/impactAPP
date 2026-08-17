@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import ProgressBar from '../../components/ProgressBar.jsx';
 import PedometerBanner from '../../components/PedometerBanner.jsx';
 import SleepCard from '../../components/SleepCard.jsx';
+import HealthConnectionCard from '../../components/health/HealthConnectionCard.jsx';
 import { usePedometer } from '../../hooks/usePedometer.js';
 import { useSleepSensor } from '../../hooks/useSleepSensor.js';
 import { useCurrentUser } from '../../context/CurrentUserContext.jsx';
@@ -57,6 +58,7 @@ function HomeEmployee() {
       <h1 className="home__greeting">שלום {user.username} 👋</h1>
 
       <PedometerBanner status={status} requestPermission={requestPermission} />
+      <HealthConnectionCard />
 
       <section className="card card--hero">
         <p className="card__label">המסלול שלי היום</p>
