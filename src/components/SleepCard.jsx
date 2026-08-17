@@ -1,14 +1,14 @@
 // Shared sleep card — used on both the student and employee home
-// screens. Always labeled "שינה משוערת" (estimated sleep), never
-// presented as a certain measurement — this is a phone-only estimation
-// engine, not a medical device. Renders a reduced "אין מספיק נתונים"
-// state whenever there isn't a confident session to show, rather than a
-// bare, potentially-misleading number.
-
+// screens. Labeled "שעות שינה" per product decision (2026-08-17) —
+// simpler end-user wording than the original "שינה משוערת" framing. The
+// underlying engine is still confidence-gated (see
+// supabase/functions/_shared/sleep/README.md) and still renders a
+// reduced "אין מספיק נתונים" state instead of a bare number when there
+// isn't a confident session — only the "מהימנות נמוכה" pill text itself
+// is suppressed now (per the same product decision), not the gating logic.
 const STATUS_META = {
   GOOD: { pillClass: 'status-pill--active', label: 'מהימנות גבוהה' },
   ESTIMATED: { pillClass: 'status-pill--scheduled', label: 'משוער' },
-  LOW_CONFIDENCE: { pillClass: 'status-pill--ended', label: 'מהימנות נמוכה' },
 };
 
 function formatDuration(minutes) {
@@ -29,10 +29,10 @@ export default function SleepCard({ session, sensorStatus, requestPermission, lo
   return (
     <section className="card sleep-card">
       <div className="sleep-card__header">
-        <p className="card__label">😴 שינה משוערת</p>
-        {session?.status && (
-          <span className={`status-pill ${STATUS_META[session.status]?.pillClass ?? 'status-pill--ended'}`}>
-            {STATUS_META[session.status]?.label ?? session.status}
+        <p className="card__label">😴 שעות שינה</p>
+        {STATUS_META[session?.status] && (
+          <span className={`status-pill ${STATUS_META[session.status].pillClass}`}>
+            {STATUS_META[session.status].label}
           </span>
         )}
       </div>
