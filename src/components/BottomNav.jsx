@@ -4,7 +4,7 @@ const TABS = [
   { to: '/app/home', label: 'בית', icon: '🏠' },
   { to: '/app/challenges', label: 'אתגרים', icon: '🎯' },
   { to: '/app/group', label: 'קבוצה', icon: '👥' },
-  { to: '/app/impact', label: 'Impact', icon: '❤️' },
+  { to: '/app/learning', label: 'למידה', icon: '📖' },
   { to: '/app/profile', label: 'אני', icon: '👤' },
 ];
 

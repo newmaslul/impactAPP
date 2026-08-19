@@ -14,7 +14,8 @@ import Impact from './routes/app/Impact.jsx';
 import ImpactProjectVote from './routes/app/ImpactProjectVote.jsx';
 import Profile from './routes/app/Profile.jsx';
 import ActivityHistory from './routes/app/ActivityHistory.jsx';
-import StudentContent from './routes/app/StudentContent.jsx';
+import Learning from './routes/app/Learning.jsx';
+import LearningDetail from './routes/app/LearningDetail.jsx';
 import AdminShell from './routes/admin/AdminShell.jsx';
 import Dashboard from './routes/admin/Dashboard.jsx';
 import AdminChallenges from './routes/admin/AdminChallenges.jsx';
@@ -53,7 +54,8 @@ export default function App() {
         <Route path="impact/vote" element={<ImpactProjectVote />} />
         <Route path="profile" element={<Profile />} />
         <Route path="activity-history" element={<ActivityHistory />} />
-        <Route path="content" element={<StudentContent />} />
+        <Route path="learning" element={<Learning />} />
+        <Route path="learning/:id" element={<LearningDetail />} />
       </Route>
 
       <Route path="/admin" element={<AdminShell />}>

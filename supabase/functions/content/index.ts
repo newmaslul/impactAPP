@@ -54,6 +54,11 @@ async function handleList(req: Request) {
     videoUrl: item.video_url,
     pointsReward: item.points_reward,
     watched: watchedIds.has(item.id),
+    category: item.category,
+    thumbnailUrl: item.thumbnail_url,
+    durationLabel: item.duration_label,
+    level: item.level,
+    benefits: item.benefits ?? [],
   }));
 
   return json({ content: result });

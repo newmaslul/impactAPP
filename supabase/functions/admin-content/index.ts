@@ -54,16 +54,30 @@ async function handleList() {
     pointsReward: item.points_reward,
     active: item.active,
     viewCount: viewCounts[item.id] ?? 0,
+    category: item.category,
+    thumbnailUrl: item.thumbnail_url,
+    durationLabel: item.duration_label,
+    level: item.level,
+    benefits: item.benefits ?? [],
   }));
 
   return json({ content: result });
 }
 
+const CATEGORIES = ['workout', 'tip', 'yoga', 'lecture'];
+const LEVELS = ['קל', 'בינוני', 'קשה'];
+
 async function handleCreate(req: Request) {
   const body = await req.json().catch(() => ({}));
-  const { title, description, videoUrl, pointsReward } = body;
+  const { title, description, videoUrl, pointsReward, category, thumbnailUrl, durationLabel, level, benefits } = body;
   if (!title || !String(title).trim()) return json({ error: 'נדרשת כותרת' }, 400);
   if (!videoUrl || !String(videoUrl).trim()) return json({ error: 'נדרש קישור לסרטון' }, 400);
+  if (category !== undefined && !CATEGORIES.includes(category)) {
+    return json({ error: `קטגוריה חייבת להיות אחת מ: ${CATEGORIES.join(', ')}` }, 400);
+  }
+  if (level !== undefined && !LEVELS.includes(level)) {
+    return json({ error: `רמה חייבת להיות אחת מ: ${LEVELS.join(', ')}` }, 400);
+  }
 
   const { data, error } = await supabaseAdmin
     .from('content_items')
@@ -72,6 +86,11 @@ async function handleCreate(req: Request) {
       description: description || null,
       video_url: String(videoUrl).trim(),
       points_reward: Number(pointsReward) || 0,
+      category: category || 'workout',
+      thumbnail_url: thumbnailUrl || null,
+      duration_label: durationLabel || null,
+      level: level || 'קל',
+      benefits: Array.isArray(benefits) ? benefits : [],
     })
     .select()
     .single();
@@ -88,6 +107,17 @@ async function handleUpdate(req: Request, id: string) {
   if (body.videoUrl !== undefined) patch.video_url = body.videoUrl;
   if (body.pointsReward !== undefined) patch.points_reward = Number(body.pointsReward) || 0;
   if (body.active !== undefined) patch.active = !!body.active;
+  if (body.category !== undefined) {
+    if (!CATEGORIES.includes(body.category)) return json({ error: `קטגוריה חייבת להיות אחת מ: ${CATEGORIES.join(', ')}` }, 400);
+    patch.category = body.category;
+  }
+  if (body.thumbnailUrl !== undefined) patch.thumbnail_url = body.thumbnailUrl || null;
+  if (body.durationLabel !== undefined) patch.duration_label = body.durationLabel || null;
+  if (body.level !== undefined) {
+    if (!LEVELS.includes(body.level)) return json({ error: `רמה חייבת להיות אחת מ: ${LEVELS.join(', ')}` }, 400);
+    patch.level = body.level;
+  }
+  if (body.benefits !== undefined) patch.benefits = Array.isArray(body.benefits) ? body.benefits : [];
 
   const { data, error } = await supabaseAdmin.from('content_items').update(patch).eq('id', id).select().maybeSingle();
   if (error) throw error;

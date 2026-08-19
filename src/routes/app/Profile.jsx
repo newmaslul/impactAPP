@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import ProgressBar from '../../components/ProgressBar.jsx';
 import { formatNumber } from '../../lib/format.js';
 import { useCurrentUser } from '../../context/CurrentUserContext.jsx';
@@ -22,6 +23,7 @@ const STATS = [
 
 export default function Profile() {
   const { user } = useCurrentUser();
+  const navigate = useNavigate();
 
   return (
     <div className="home">
@@ -69,6 +71,7 @@ export default function Profile() {
       </section>
 
       <div className="ghost-row">
+        <button type="button" className="btn-ghost" onClick={() => navigate('/app/impact')}>❤️ Impact</button>
         <button type="button" className="btn-ghost">הגדרות</button>
         <button type="button" className="btn-ghost">פרטיות</button>
       </div>

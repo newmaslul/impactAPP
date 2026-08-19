@@ -1,6 +1,15 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../lib/api.js';
 
+const CATEGORIES = [
+  { value: 'workout', label: 'אימונים' },
+  { value: 'tip', label: 'טיפים' },
+  { value: 'yoga', label: 'יוגה' },
+  { value: 'lecture', label: 'הרצאה' },
+];
+const CATEGORY_LABEL = Object.fromEntries(CATEGORIES.map((c) => [c.value, c.label]));
+const LEVELS = ['קל', 'בינוני', 'קשה'];
+
 export default function AdminContent() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -36,7 +45,7 @@ export default function AdminContent() {
   return (
     <div className="admin-page">
       <div className="admin-page__header">
-        <h1 className="admin-page__title">תכנים</h1>
+        <h1 className="admin-page__title">תכנים (למידה)</h1>
         <button type="button" className="btn-primary admin-page__header-cta" onClick={() => setView('create')}>
           + הוסף תוכן
         </button>
@@ -48,6 +57,7 @@ export default function AdminContent() {
             <thead>
               <tr>
                 <th>כותרת</th>
+                <th>קטגוריה</th>
                 <th>נקודות</th>
                 <th>צפיות</th>
                 <th>סטטוס</th>
@@ -56,13 +66,14 @@ export default function AdminContent() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={5} className="admin-table__empty">טוען…</td></tr>
+                <tr><td colSpan={6} className="admin-table__empty">טוען…</td></tr>
               ) : items.length === 0 ? (
-                <tr><td colSpan={5} className="admin-table__empty">אין עדיין תכנים</td></tr>
+                <tr><td colSpan={6} className="admin-table__empty">אין עדיין תכנים</td></tr>
               ) : (
                 items.map((item) => (
                   <tr key={item.id}>
                     <td className="admin-table__name">{item.title}</td>
+                    <td>{CATEGORY_LABEL[item.category] ?? item.category}</td>
                     <td className="admin-table__points">{item.pointsReward}</td>
                     <td className="admin-table__points">{item.viewCount}</td>
                     <td>
@@ -94,6 +105,11 @@ function ContentForm({ onCancel, onSubmit }) {
   const [description, setDescription] = useState('');
   const [videoUrl, setVideoUrl] = useState('');
   const [pointsReward, setPointsReward] = useState('50');
+  const [category, setCategory] = useState('workout');
+  const [thumbnailUrl, setThumbnailUrl] = useState('');
+  const [durationLabel, setDurationLabel] = useState('');
+  const [level, setLevel] = useState('קל');
+  const [benefitsText, setBenefitsText] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -105,7 +121,20 @@ function ContentForm({ onCancel, onSubmit }) {
     setError('');
     setBusy(true);
     try {
-      await onSubmit({ title: title.trim(), description: description.trim(), videoUrl: videoUrl.trim(), pointsReward: Number(pointsReward) || 0 });
+      await onSubmit({
+        title: title.trim(),
+        description: description.trim(),
+        videoUrl: videoUrl.trim(),
+        pointsReward: Number(pointsReward) || 0,
+        category,
+        thumbnailUrl: thumbnailUrl.trim(),
+        durationLabel: durationLabel.trim(),
+        level,
+        benefits: benefitsText
+          .split(',')
+          .map((b) => b.trim())
+          .filter(Boolean),
+      });
     } catch (err) {
       setError(err.message);
       setBusy(false);
@@ -121,7 +150,7 @@ function ContentForm({ onCancel, onSubmit }) {
       <form className="card admin-form" onSubmit={handleSubmit} noValidate>
         <div className="field">
           <label htmlFor="content-title">כותרת</label>
-          <input id="content-title" type="text" className="text-input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="לדוגמה: בטיחות בדרכים" />
+          <input id="content-title" type="text" className="text-input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="לדוגמה: אימון כיף 5 דקות" />
         </div>
 
         <div className="field">
@@ -130,15 +159,56 @@ function ContentForm({ onCancel, onSubmit }) {
         </div>
 
         <div className="field">
+          <label htmlFor="content-category">קטגוריה</label>
+          <select id="content-category" className="text-input" value={category} onChange={(e) => setCategory(e.target.value)}>
+            {CATEGORIES.map((c) => (
+              <option key={c.value} value={c.value}>{c.label}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="field">
           <label htmlFor="content-url">קישור לסרטון</label>
           <input id="content-url" type="url" className="text-input" value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} placeholder="https://..." dir="ltr" />
         </div>
 
         <div className="field">
-          <label htmlFor="content-points">נקודות בסיום צפייה</label>
+          <label htmlFor="content-thumb">קישור לתמונה ממוזערת (לא חובה)</label>
+          <input id="content-thumb" type="url" className="text-input" value={thumbnailUrl} onChange={(e) => setThumbnailUrl(e.target.value)} placeholder="https://..." dir="ltr" />
+        </div>
+
+        <div className="date-range-row">
+          <div className="field" style={{ flex: 1 }}>
+            <label htmlFor="content-duration">משך (לא חובה)</label>
+            <input id="content-duration" type="text" className="text-input" value={durationLabel} onChange={(e) => setDurationLabel(e.target.value)} placeholder="לדוגמה: 5 דקות" />
+          </div>
+          <div className="field" style={{ flex: 1 }}>
+            <label htmlFor="content-level">רמת קושי</label>
+            <select id="content-level" className="text-input" value={level} onChange={(e) => setLevel(e.target.value)}>
+              {LEVELS.map((l) => (
+                <option key={l} value={l}>{l}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="field">
+          <label htmlFor="content-benefits">יתרונות, מופרדים בפסיק (לא חובה)</label>
+          <input
+            id="content-benefits"
+            type="text"
+            className="text-input"
+            value={benefitsText}
+            onChange={(e) => setBenefitsText(e.target.value)}
+            placeholder="לדוגמה: אנרגיה, חיזוק הגוף, שיפור מצב הרוח"
+          />
+        </div>
+
+        <div className="field">
+          <label htmlFor="content-points">נקודות (XP) בסיום</label>
           <div className="field-suffix-row">
             <input id="content-points" type="number" min="0" className="text-input" value={pointsReward} onChange={(e) => setPointsReward(e.target.value)} dir="ltr" />
-            <span className="field-suffix">נקודות</span>
+            <span className="field-suffix">XP</span>
           </div>
         </div>
 
