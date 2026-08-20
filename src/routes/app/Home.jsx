@@ -1,20 +1,11 @@
-import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import ProgressBar from '../../components/ProgressBar.jsx';
-import PedometerBanner from '../../components/PedometerBanner.jsx';
-import SleepCard from '../../components/SleepCard.jsx';
-import HealthConnectionCard from '../../components/health/HealthConnectionCard.jsx';
 import StepRing from '../../components/StepRing.jsx';
 import HeroIllustration from '../../components/HeroIllustration.jsx';
 import LevelBadgeCard from '../../components/LevelBadgeCard.jsx';
 import { usePedometer } from '../../hooks/usePedometer.js';
-import { useSleepSensor } from '../../hooks/useSleepSensor.js';
 import { useCurrentUser } from '../../context/CurrentUserContext.jsx';
-import { api } from '../../lib/api.js';
 import HomeStudent from './HomeStudent.jsx';
 import { ChallengeCard } from './Challenges.jsx';
-
-const SLEEP_REFRESH_INTERVAL_MS = 8000;
 
 // Mock data — will come from the connected activity source + backend later.
 // Steps are the exception: those come live from the phone's accelerometer
@@ -22,9 +13,6 @@ const SLEEP_REFRESH_INTERVAL_MS = 8000;
 // isn't available (desktop browsers, permission not yet granted/denied).
 const DEMO_STEPS = 7420;
 const DAILY_GOAL = 8000;
-const ACTIVITY_MIN = 34;
-const TASK = { title: 'הליכה של 20 דקות', subtitle: 'עם עובד מהצוות', points: 100 };
-const TEAM = { points: 78420, goal: 100000 };
 
 // Weekly steps aren't tracked anywhere yet (only "today" is, via the live
 // sensor) — this is a fixed demo number, same convention as DEMO_STEPS,
@@ -58,8 +46,8 @@ const CLASS_CHALLENGE_PREVIEW = {
 const fmt = (n) => n.toLocaleString('he-IL');
 
 // Rough demo-only conversions — the app doesn't track calories/distance
-// as real metrics yet, this is just enough to fill the redesigned stat
-// tiles with numbers that move together with the live step count.
+// as real metrics yet, this is just enough to fill the stat tiles with
+// numbers that move together with the live step count.
 const caloriesFromSteps = (steps) => Math.round(steps * 0.04);
 const distanceKmFromSteps = (steps) => (steps * 0.00075).toFixed(1);
 
@@ -75,25 +63,12 @@ export default function Home() {
 
 function HomeEmployee() {
   const navigate = useNavigate();
-  const { steps, status, requestPermission } = usePedometer();
-  const { status: sleepSensorStatus, requestPermission: requestSleepPermission } = useSleepSensor();
+  const { steps, status } = usePedometer();
   const { user } = useCurrentUser();
   const liveMode = status === 'active';
   const displaySteps = liveMode ? steps : DEMO_STEPS;
   const goalPct = Math.min(100, Math.round((displaySteps / DAILY_GOAL) * 100));
   const weeklyPct = Math.min(100, Math.round((DEMO_WEEKLY_STEPS / WEEKLY_GOAL) * 100));
-
-  const [sleepSummary, setSleepSummary] = useState(null);
-  useEffect(() => {
-    const load = () => {
-      api.sleepSummary().then(setSleepSummary).catch(() => {
-        // Best-effort — a failed sleep fetch shouldn't block the rest of the dashboard.
-      });
-    };
-    load();
-    const id = setInterval(load, SLEEP_REFRESH_INTERVAL_MS);
-    return () => clearInterval(id);
-  }, []);
 
   return (
     <div className="home">
@@ -107,9 +82,6 @@ function HomeEmployee() {
       </header>
 
       <p className="home__greeting">שלום {user.username} 👋</p>
-
-      <PedometerBanner status={status} requestPermission={requestPermission} />
-      <HealthConnectionCard />
 
       <LevelBadgeCard levelTitle={LEVEL_TITLE} progressPct={LEVEL_PROGRESS_PCT} caption="כל צעד מקרב אותך למטרה!" />
 
@@ -134,7 +106,7 @@ function HomeEmployee() {
       <ChallengeCard challenge={DAILY_CHALLENGE_PREVIEW} onDetails={() => navigate(`/app/challenges/${DAILY_CHALLENGE_PREVIEW.id}`)} />
       <ChallengeCard challenge={CLASS_CHALLENGE_PREVIEW} onDetails={() => navigate(`/app/challenges/${CLASS_CHALLENGE_PREVIEW.id}`)} />
 
-      <div className="stat-grid stat-grid--3">
+      <div className="stat-grid">
         <div className="card stat-tile">
           <span className="stat-tile__icon" aria-hidden="true">🔥</span>
           <p className="stat-tile__value">{fmt(caloriesFromSteps(displaySteps))}</p>
@@ -145,35 +117,7 @@ function HomeEmployee() {
           <p className="stat-tile__value">{distanceKmFromSteps(displaySteps)}</p>
           <p className="stat-tile__label">ק"מ</p>
         </div>
-        <div className="card stat-tile">
-          <span className="stat-tile__icon" aria-hidden="true">⏱️</span>
-          <p className="stat-tile__value">{ACTIVITY_MIN}</p>
-          <p className="stat-tile__label">דקות פעילות</p>
-        </div>
       </div>
-
-      <SleepCard session={sleepSummary?.session} sensorStatus={sleepSensorStatus} requestPermission={requestSleepPermission} />
-
-      <section className="card task-card">
-        <p className="card__label">🎯 משימת היום</p>
-        <p className="task-card__title">{TASK.title}</p>
-        <p className="task-card__subtitle">{TASK.subtitle}</p>
-        <div className="task-card__footer">
-          <span className="points-pill">+{TASK.points} נקודות</span>
-          <button type="button" className="btn-primary task-card__cta">התחל משימה</button>
-        </div>
-      </section>
-
-      <section className="card">
-        <p className="card__label">👥 הצוות שלי</p>
-        <p className="card__meta card__meta--emphasis">
-          {fmt(TEAM.points)} <span>/ {fmt(TEAM.goal)} נקודות</span>
-        </p>
-        <ProgressBar
-          value={(TEAM.points / TEAM.goal) * 100}
-          label={`${fmt(TEAM.points)} מתוך ${fmt(TEAM.goal)} נקודות צוות`}
-        />
-      </section>
     </div>
   );
 }
