@@ -1,18 +1,8 @@
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SubPageHeader from '../../components/SubPageHeader.jsx';
 import { formatNumber } from '../../lib/format.js';
-
-// Mock data — will come from a class-steps leaderboard endpoint once the
-// class challenge is data-driven (mirrors Group.jsx's RANKING pattern,
-// same numbers/order as the mockup: total steps per class, not points).
-const RANKING = [
-  { name: 'הכיתה של נחון', steps: 98450 },
-  { name: 'הכיתה של פרועה', steps: 87230 },
-  { name: 'הכיתה של יעבל', steps: 76890 },
-  { name: 'הכיתה של דנה', steps: 65430 },
-  { name: 'הכיתה של מאי', steps: 58210 },
-  { name: 'הכיתה של אורי', steps: 45670 },
-];
+import { api } from '../../lib/api.js';
 
 const initial = (name) => name.trim().split(' ').pop()[0];
 
@@ -31,30 +21,67 @@ function PodiumSpot({ entry, place }) {
 
 export default function ClassRanking() {
   const navigate = useNavigate();
-  const [first, second, third, ...rest] = RANKING;
+  const [ranking, setRanking] = useState(null);
+  // Tracked separately from `ranking` — see Learning.jsx for why a
+  // failed fetch must not leave the loading state stuck forever.
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  const load = () => {
+    setLoading(true);
+    setError('');
+    api
+      .classRanking()
+      .then(({ ranking }) => setRanking(ranking))
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(load, []);
+
+  const [first, second, third, ...rest] = ranking ?? [];
 
   return (
     <div className="detail-section">
       <SubPageHeader title="דירוג כיתתי" onBack={() => navigate('/app/challenges')} />
 
-      <section className="card">
-        <p className="card__label">השבוע</p>
-        <div className="podium">
-          <PodiumSpot entry={second} place={2} />
-          <PodiumSpot entry={first} place={1} />
-          <PodiumSpot entry={third} place={3} />
+      {loading && <p className="admin-table__empty">טוען…</p>}
+
+      {!loading && error && (
+        <div className="card">
+          <p className="form-error">לא הצלחנו לטעון את הדירוג. {error}</p>
+          <button type="button" className="btn-ghost btn-ghost--block" onClick={load}>
+            נסו שוב
+          </button>
         </div>
-        <div className="rank-list">
-          {rest.map((entry, i) => (
-            <div className="rank-row" key={entry.name}>
-              <span className="rank-row__place">{i + 4}</span>
-              <span className="rank-row__avatar" aria-hidden="true">{initial(entry.name)}</span>
-              <span className="rank-row__name">{entry.name}</span>
-              <span className="rank-row__points">{formatNumber(entry.steps)}</span>
+      )}
+
+      {!loading && !error && (ranking ?? []).length === 0 && (
+        <p className="org-empty">אין עדיין כיתות לדירוג</p>
+      )}
+
+      {!loading && !error && (ranking ?? []).length > 0 && (
+        <section className="card">
+          <p className="card__label">השבוע</p>
+          {first && (
+            <div className="podium">
+              {second && <PodiumSpot entry={second} place={2} />}
+              <PodiumSpot entry={first} place={1} />
+              {third && <PodiumSpot entry={third} place={3} />}
             </div>
-          ))}
-        </div>
-      </section>
+          )}
+          <div className="rank-list">
+            {rest.map((entry, i) => (
+              <div className="rank-row" key={entry.id}>
+                <span className="rank-row__place">{i + 4}</span>
+                <span className="rank-row__avatar" aria-hidden="true">{initial(entry.name)}</span>
+                <span className="rank-row__name">{entry.name}</span>
+                <span className="rank-row__points">{formatNumber(entry.steps)}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }
