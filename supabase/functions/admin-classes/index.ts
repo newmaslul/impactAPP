@@ -21,6 +21,7 @@ Deno.serve(async (req) => {
   try {
     if (rest.length === 0 && req.method === 'GET') return await handleList();
     if (rest.length === 0 && req.method === 'POST') return await handleCreate(req);
+    if (rest.length === 1 && req.method === 'PATCH') return await handleUpdate(req, rest[0]);
     if (rest.length === 1 && req.method === 'DELETE') {
       const { error, count } = await supabaseAdmin.from('classes').delete({ count: 'exact' }).eq('id', rest[0]);
       if (error) throw error;
@@ -75,4 +76,24 @@ async function handleCreate(req: Request) {
   if (error) throw error;
 
   return json({ class: data }, 201);
+}
+
+async function handleUpdate(req: Request, id: string) {
+  const body = await req.json().catch(() => ({}));
+  const patch: Record<string, unknown> = {};
+
+  if (body.name !== undefined) {
+    if (!String(body.name).trim()) return json({ error: 'נדרש שם כיתה' }, 400);
+    patch.name = String(body.name).trim();
+  }
+  if (body.schoolId !== undefined) {
+    if (!body.schoolId) return json({ error: 'נדרש בית ספר' }, 400);
+    patch.school_id = body.schoolId;
+  }
+
+  const { data, error } = await supabaseAdmin.from('classes').update(patch).eq('id', id).select().maybeSingle();
+  if (error) throw error;
+  if (!data) return json({ error: 'כיתה לא נמצאה' }, 404);
+
+  return json({ class: data });
 }

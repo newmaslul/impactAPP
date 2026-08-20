@@ -11,6 +11,17 @@ export default function AdminSchools() {
   const [newClassSchoolId, setNewClassSchoolId] = useState('');
   const [error, setError] = useState('');
 
+  // Inline-edit state: which row (by id) is being edited, and its
+  // in-progress field values — one shared editor per table, keyed by id
+  // so only one row's inputs are ever mounted at a time.
+  const [editingSchoolId, setEditingSchoolId] = useState(null);
+  const [schoolEdit, setSchoolEdit] = useState({ name: '', code: '', studentQuota: '' });
+  const [savingSchool, setSavingSchool] = useState(false);
+
+  const [editingClassId, setEditingClassId] = useState(null);
+  const [classEdit, setClassEdit] = useState({ name: '', schoolId: '' });
+  const [savingClass, setSavingClass] = useState(false);
+
   const load = () => {
     api.adminListSchools().then(({ schools }) => {
       setSchools(schools);
@@ -69,6 +80,73 @@ export default function AdminSchools() {
     }
   };
 
+  const startEditingSchool = (s) => {
+    setError('');
+    setEditingSchoolId(s.id);
+    setSchoolEdit({
+      name: s.name ?? '',
+      code: s.code ?? '',
+      studentQuota: s.student_quota ?? '',
+    });
+  };
+
+  const cancelEditingSchool = () => {
+    setEditingSchoolId(null);
+  };
+
+  const handleSaveSchool = async (id) => {
+    if (!schoolEdit.name.trim() || !schoolEdit.code.trim()) {
+      setError('נדרש שם וקוד בית ספר');
+      return;
+    }
+    setSavingSchool(true);
+    setError('');
+    try {
+      await api.adminUpdateSchool(id, {
+        name: schoolEdit.name.trim(),
+        code: schoolEdit.code.trim(),
+        studentQuota: schoolEdit.studentQuota === '' ? null : Number(schoolEdit.studentQuota),
+      });
+      setEditingSchoolId(null);
+      load();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSavingSchool(false);
+    }
+  };
+
+  const startEditingClass = (c) => {
+    setError('');
+    setEditingClassId(c.id);
+    setClassEdit({ name: c.name ?? '', schoolId: String(c.school_id ?? '') });
+  };
+
+  const cancelEditingClass = () => {
+    setEditingClassId(null);
+  };
+
+  const handleSaveClass = async (id) => {
+    if (!classEdit.name.trim() || !classEdit.schoolId) {
+      setError('נדרש שם כיתה ובית ספר');
+      return;
+    }
+    setSavingClass(true);
+    setError('');
+    try {
+      await api.adminUpdateClass(id, {
+        name: classEdit.name.trim(),
+        schoolId: Number(classEdit.schoolId),
+      });
+      setEditingClassId(null);
+      load();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSavingClass(false);
+    }
+  };
+
   return (
     <div className="admin-page">
       <div className="admin-page__header">
@@ -83,14 +161,61 @@ export default function AdminSchools() {
           <table className="admin-table">
             <thead><tr><th>שם</th><th>קוד</th><th>נרשמים / מכסה</th><th></th></tr></thead>
             <tbody>
-              {schools.map((s) => (
-                <tr key={s.id}>
-                  <td className="admin-table__name">{s.name}</td>
-                  <td dir="ltr">{s.code ?? '—'}</td>
-                  <td>{s.registeredStudentCount ?? 0} / {s.student_quota ?? '∞'}</td>
-                  <td><button type="button" className="link-btn link-btn--danger" onClick={() => handleRemoveSchool(s.id)}>הסר</button></td>
-                </tr>
-              ))}
+              {schools.map((s) => {
+                const isEditing = editingSchoolId === s.id;
+                if (isEditing) {
+                  return (
+                    <tr key={s.id}>
+                      <td>
+                        <input
+                          type="text"
+                          className="text-input"
+                          value={schoolEdit.name}
+                          onChange={(e) => setSchoolEdit((prev) => ({ ...prev, name: e.target.value }))}
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="text"
+                          className="text-input"
+                          value={schoolEdit.code}
+                          onChange={(e) => setSchoolEdit((prev) => ({ ...prev, code: e.target.value }))}
+                          dir="ltr"
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="number"
+                          min="0"
+                          className="text-input"
+                          placeholder="ללא הגבלה"
+                          value={schoolEdit.studentQuota}
+                          onChange={(e) => setSchoolEdit((prev) => ({ ...prev, studentQuota: e.target.value }))}
+                          dir="ltr"
+                          style={{ width: '7rem' }}
+                        />
+                      </td>
+                      <td style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button type="button" className="link-btn" disabled={savingSchool} onClick={() => handleSaveSchool(s.id)}>
+                          {savingSchool ? 'שומר…' : 'שמור'}
+                        </button>
+                        <button type="button" className="link-btn" disabled={savingSchool} onClick={cancelEditingSchool}>ביטול</button>
+                      </td>
+                    </tr>
+                  );
+                }
+                return (
+                  <tr key={s.id}>
+                    <td className="admin-table__name">{s.name}</td>
+                    <td dir="ltr">{s.code ?? '—'}</td>
+                    <td>{s.registeredStudentCount ?? 0} / {s.student_quota ?? '∞'}</td>
+                    <td style={{ display: 'flex', gap: '0.5rem' }}>
+                      <button type="button" className="link-btn" onClick={() => startEditingSchool(s)}>ערוך</button>
+                      <button type="button" className="link-btn link-btn--danger" onClick={() => handleRemoveSchool(s.id)}>הסר</button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -136,14 +261,50 @@ export default function AdminSchools() {
           <table className="admin-table">
             <thead><tr><th>כיתה</th><th>בית ספר</th><th>תלמידים</th><th></th></tr></thead>
             <tbody>
-              {classes.map((c) => (
-                <tr key={c.id}>
-                  <td className="admin-table__name">{c.name}</td>
-                  <td>{c.school_name}</td>
-                  <td>{c.student_count}</td>
-                  <td><button type="button" className="link-btn link-btn--danger" onClick={() => handleRemoveClass(c.id)}>הסר</button></td>
-                </tr>
-              ))}
+              {classes.map((c) => {
+                const isEditing = editingClassId === c.id;
+                if (isEditing) {
+                  return (
+                    <tr key={c.id}>
+                      <td>
+                        <input
+                          type="text"
+                          className="text-input"
+                          value={classEdit.name}
+                          onChange={(e) => setClassEdit((prev) => ({ ...prev, name: e.target.value }))}
+                        />
+                      </td>
+                      <td>
+                        <select
+                          className="text-input"
+                          value={classEdit.schoolId}
+                          onChange={(e) => setClassEdit((prev) => ({ ...prev, schoolId: e.target.value }))}
+                        >
+                          {schools.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                        </select>
+                      </td>
+                      <td>{c.student_count}</td>
+                      <td style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button type="button" className="link-btn" disabled={savingClass} onClick={() => handleSaveClass(c.id)}>
+                          {savingClass ? 'שומר…' : 'שמור'}
+                        </button>
+                        <button type="button" className="link-btn" disabled={savingClass} onClick={cancelEditingClass}>ביטול</button>
+                      </td>
+                    </tr>
+                  );
+                }
+                return (
+                  <tr key={c.id}>
+                    <td className="admin-table__name">{c.name}</td>
+                    <td>{c.school_name}</td>
+                    <td>{c.student_count}</td>
+                    <td style={{ display: 'flex', gap: '0.5rem' }}>
+                      <button type="button" className="link-btn" onClick={() => startEditingClass(c)}>ערוך</button>
+                      <button type="button" className="link-btn link-btn--danger" onClick={() => handleRemoveClass(c.id)}>הסר</button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

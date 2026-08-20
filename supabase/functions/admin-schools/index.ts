@@ -73,6 +73,7 @@ Deno.serve(async (req) => {
       }
       return json({ school: data }, 201);
     }
+    if (rest.length === 1 && req.method === 'PATCH') return await handleUpdate(req, rest[0]);
     if (rest.length === 1 && req.method === 'DELETE') {
       const { error, count } = await supabaseAdmin.from('schools').delete({ count: 'exact' }).eq('id', rest[0]);
       if (error) throw error;
@@ -85,3 +86,35 @@ Deno.serve(async (req) => {
     return json({ error: 'שגיאת שרת' }, 500);
   }
 });
+
+async function handleUpdate(req: Request, id: string) {
+  const body = await req.json().catch(() => ({}));
+  const patch: Record<string, unknown> = {};
+
+  if (body.name !== undefined) {
+    if (!String(body.name).trim()) return json({ error: 'נדרש שם בית ספר' }, 400);
+    patch.name = String(body.name).trim();
+  }
+  if (body.code !== undefined) {
+    if (!String(body.code).trim()) return json({ error: 'נדרש קוד בית ספר' }, 400);
+    patch.code = String(body.code).trim();
+  }
+  if (body.studentQuota !== undefined) {
+    if (body.studentQuota === null || body.studentQuota === '') {
+      patch.student_quota = null;
+    } else {
+      const quotaNum = Number(body.studentQuota);
+      if (!Number.isInteger(quotaNum) || quotaNum < 0) return json({ error: 'כמות תלמידים לרישום חייבת להיות מספר שלם חיובי' }, 400);
+      patch.student_quota = quotaNum;
+    }
+  }
+
+  const { data, error } = await supabaseAdmin.from('schools').update(patch).eq('id', id).select().maybeSingle();
+  if (error) {
+    if (error.code === '23505') return json({ error: 'קוד בית הספר כבר קיים — בחרו קוד אחר' }, 409);
+    throw error;
+  }
+  if (!data) return json({ error: 'בית ספר לא נמצא' }, 404);
+
+  return json({ school: data });
+}
