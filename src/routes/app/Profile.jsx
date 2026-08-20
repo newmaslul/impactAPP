@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ProgressBar from '../../components/ProgressBar.jsx';
 import { formatNumber } from '../../lib/format.js';
 import { useCurrentUser } from '../../context/CurrentUserContext.jsx';
+import { api } from '../../lib/api.js';
 
 // Mock data — will come from the user's account + activity history later.
 const LEVEL = 8;
@@ -27,8 +29,35 @@ const STATS = [
 ];
 
 export default function Profile() {
-  const { user } = useCurrentUser();
+  const { user, updateUser } = useCurrentUser();
   const navigate = useNavigate();
+
+  const [editingName, setEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState('');
+  const [savingName, setSavingName] = useState(false);
+  const [nameError, setNameError] = useState('');
+
+  const startEditingName = () => {
+    setNameInput(user.username);
+    setNameError('');
+    setEditingName(true);
+  };
+
+  const handleSaveName = async () => {
+    const trimmed = nameInput.trim();
+    if (!trimmed) return setNameError('נדרש שם משתמש');
+    setSavingName(true);
+    setNameError('');
+    try {
+      const { user: updated } = await api.updateMe({ username: trimmed });
+      updateUser(updated);
+      setEditingName(false);
+    } catch (err) {
+      setNameError(err.message);
+    } finally {
+      setSavingName(false);
+    }
+  };
 
   return (
     <div className="home">
@@ -38,7 +67,32 @@ export default function Profile() {
         <div className="profile-header">
           <span className="profile-header__avatar" aria-hidden="true">{user.username[0]}</span>
           <div className="profile-header__text">
-            <p className="profile-header__name">{user.username}</p>
+            {editingName ? (
+              <div className="profile-header__name-edit">
+                <input
+                  type="text"
+                  className="text-input"
+                  value={nameInput}
+                  onChange={(e) => setNameInput(e.target.value)}
+                  autoFocus
+                  maxLength={60}
+                />
+                <button type="button" className="link-btn" onClick={handleSaveName} disabled={savingName}>
+                  {savingName ? 'שומר…' : 'שמור'}
+                </button>
+                <button type="button" className="link-btn" onClick={() => setEditingName(false)} disabled={savingName}>
+                  ביטול
+                </button>
+              </div>
+            ) : (
+              <p className="profile-header__name">
+                {user.username}
+                <button type="button" className="profile-header__edit" aria-label="ערכו את השם שלכם" onClick={startEditingName}>
+                  ✏️
+                </button>
+              </p>
+            )}
+            {nameError && <p className="form-error">{nameError}</p>}
             <p className="profile-header__level">
               רמה {LEVEL}
               {user.department && <span className="profile-header__dept"> · {user.department}</span>}

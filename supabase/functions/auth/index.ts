@@ -24,6 +24,7 @@ Deno.serve(async (req) => {
     if (path.endsWith('/biometric-login') && req.method === 'POST') return await handleBiometricLogin(req);
     if (path.endsWith('/forgot-password') && req.method === 'POST') return await handleForgotPassword(req);
     if (path.endsWith('/me') && req.method === 'GET') return await handleMe(req);
+    if (path.endsWith('/me') && req.method === 'PATCH') return await handleUpdateMe(req);
     return json({ error: 'Not found' }, 404);
   } catch (err) {
     if (err instanceof AuthError) return json({ error: err.message }, 401);
@@ -123,5 +124,28 @@ async function handleMe(req: Request) {
   const { data: user, error } = await supabaseAdmin.from('users').select('*').eq('id', userId).maybeSingle();
   if (error) throw error;
   if (!user) return json({ error: 'משתמש לא נמצא' }, 404);
+  return json({ user: toPublicUser(user) });
+}
+
+// Self-service profile edit — deliberately narrow (username only) rather
+// than a general-purpose patch: phone/password/role changes go through
+// their own dedicated, more carefully-guarded flows (login, admin tools),
+// not this endpoint.
+async function handleUpdateMe(req: Request) {
+  const userId = getUserIdFromRequest(req);
+  const body = await req.json().catch(() => ({}));
+  const username = String(body.username ?? '').trim();
+  if (!username) return json({ error: 'נדרש שם משתמש' }, 400);
+  if (username.length > 60) return json({ error: 'שם ארוך מדי' }, 400);
+
+  const { data: user, error } = await supabaseAdmin
+    .from('users')
+    .update({ username })
+    .eq('id', userId)
+    .select()
+    .maybeSingle();
+  if (error) throw error;
+  if (!user) return json({ error: 'משתמש לא נמצא' }, 404);
+
   return json({ user: toPublicUser(user) });
 }

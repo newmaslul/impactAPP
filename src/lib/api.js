@@ -50,6 +50,7 @@ export const api = {
   biometricLogin: (phone) => request('/auth/biometric-login', { method: 'POST', body: { phone } }),
   forgotPassword: (phone) => request('/auth/forgot-password', { method: 'POST', body: { phone } }),
   me: () => request('/auth/me', { auth: true }),
+  updateMe: (payload) => request('/auth/me', { method: 'PATCH', body: payload, auth: true }),
 
   adminListEmployees: () => request('/admin-employees'),
   adminUpdateEmployee: (id, payload) => request(`/admin-employees/${id}`, { method: 'PATCH', body: payload }),

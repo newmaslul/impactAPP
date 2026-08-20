@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { api, getToken } from '../lib/api.js';
 
-const CurrentUserContext = createContext({ user: null, loading: true, error: null });
+const CurrentUserContext = createContext({ user: null, loading: true, error: null, setUser: () => {} });
 
 export function CurrentUserProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -22,7 +22,7 @@ export function CurrentUserProvider({ children }) {
   }, []);
 
   return (
-    <CurrentUserContext.Provider value={{ user, loading, error }}>
+    <CurrentUserContext.Provider value={{ user, loading, error, setUser }}>
       {children}
     </CurrentUserContext.Provider>
   );
@@ -34,6 +34,11 @@ export function CurrentUserProvider({ children }) {
 const DEMO_USER = { username: 'איתי', department: null };
 
 export function useCurrentUser() {
-  const { user, loading, error } = useContext(CurrentUserContext);
-  return { user: user ?? DEMO_USER, isRealUser: !!user, loading, error };
+  const { user, loading, error, setUser } = useContext(CurrentUserContext);
+  // updateUser: applies a server-confirmed patch (e.g. the response from
+  // api.updateMe) to the cached user immediately, so every screen reading
+  // useCurrentUser() reflects the change at once — no refetch/reload
+  // needed. Only meaningful when a real user is signed in.
+  const updateUser = (patch) => setUser((prev) => (prev ? { ...prev, ...patch } : prev));
+  return { user: user ?? DEMO_USER, isRealUser: !!user, loading, error, updateUser };
 }

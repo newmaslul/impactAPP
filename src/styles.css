@@ -1270,9 +1270,37 @@ a { touch-action: manipulation; }
 .profile-header__text { flex: 1; min-width: 0; }
 
 .profile-header__name {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   font-weight: 800;
   font-size: 1.2rem;
   color: var(--ink);
+}
+
+.profile-header__edit {
+  border: none;
+  background: none;
+  padding: 0.1rem;
+  font-size: 0.9rem;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.6;
+}
+
+.profile-header__edit:hover { opacity: 1; }
+
+.profile-header__name-edit {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.profile-header__name-edit .text-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.45rem 0.7rem;
+  font-size: 0.95rem;
 }
 
 .profile-header__level {

@@ -133,7 +133,7 @@ export default function HomeStudent() {
           </div>
 
           <button type="button" className="btn-primary" onClick={() => navigate('/app/learning')}>
-            📖 למידים וזזים — קבלו XP
+            ▶️ בוסט וידאו — קבלו בונוס
           </button>
 
           <button type="button" className="btn-ghost btn-ghost--block" onClick={() => navigate('/app/activity-history')}>

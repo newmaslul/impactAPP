@@ -55,7 +55,7 @@ export default function Learning() {
 
   return (
     <div className="home">
-      <h1 className="home__greeting">📖 למידים וזזים</h1>
+      <h1 className="home__greeting">▶️ בוסט וידאו</h1>
 
       <div className="learning-tabs" role="tablist">
         {CATEGORIES.map((c) => (
