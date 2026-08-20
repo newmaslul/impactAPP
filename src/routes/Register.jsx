@@ -17,6 +17,7 @@ export default function Register() {
   const [department, setDepartment] = useState(DEPARTMENTS[0]);
   const [classes, setClasses] = useState([]);
   const [classId, setClassId] = useState('');
+  const [schoolCode, setSchoolCode] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -46,6 +47,7 @@ export default function Register() {
     if (!username.trim()) return setError('נדרש שם משתמש');
     if (password.length < 6) return setError('הסיסמה צריכה להכיל לפחות 6 תווים');
     if (accountType === 'student' && !classId) return setError('נדרשת כיתה');
+    if (accountType === 'student' && !schoolCode.trim()) return setError('נדרש קוד בית ספר');
 
     setError('');
     setBusy(true);
@@ -56,7 +58,7 @@ export default function Register() {
         password,
         biometricEnabled,
         role: accountType,
-        ...(accountType === 'student' ? { classId: Number(classId) } : { department }),
+        ...(accountType === 'student' ? { classId: Number(classId), schoolCode: schoolCode.trim() } : { department }),
       });
       setToken(token);
       if (biometricEnabled) setBiometricPhone(phone.trim());
@@ -140,19 +142,34 @@ export default function Register() {
               </select>
             </div>
           ) : (
-            <div className="field">
-              <label htmlFor="reg-class">כיתה</label>
-              <select
-                id="reg-class"
-                className="text-input"
-                value={classId}
-                onChange={(e) => setClassId(e.target.value)}
-              >
-                {classes.map((c) => (
-                  <option key={c.id} value={c.id}>{c.school_name} · {c.name}</option>
-                ))}
-              </select>
-            </div>
+            <>
+              <div className="field">
+                <label htmlFor="reg-class">כיתה</label>
+                <select
+                  id="reg-class"
+                  className="text-input"
+                  value={classId}
+                  onChange={(e) => setClassId(e.target.value)}
+                >
+                  {classes.map((c) => (
+                    <option key={c.id} value={c.id}>{c.school_name} · {c.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="field">
+                <label htmlFor="reg-school-code">קוד בית ספר</label>
+                <input
+                  id="reg-school-code"
+                  type="text"
+                  className="text-input"
+                  placeholder="קבלו מהמורה או ממנהל בית הספר"
+                  value={schoolCode}
+                  onChange={(e) => setSchoolCode(e.target.value)}
+                  dir="ltr"
+                />
+              </div>
+            </>
           )}
 
           <div className="field">

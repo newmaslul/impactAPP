@@ -33,15 +33,68 @@ Deno.serve(async (req) => {
   }
 });
 
+// A student registering must enter the access code of the school their
+// chosen class belongs to, and registration is blocked once that
+// school's already-registered student count reaches its quota (a school
+// with no quota set is unlimited). Both messages are the exact copy
+// specified by the product owner — returned verbatim, not reworded.
+async function validateSchoolCodeAndQuota(classId: number, schoolCode: string): Promise<string | null> {
+  const { data: klass, error: classError } = await supabaseAdmin
+    .from('classes')
+    .select('school_id')
+    .eq('id', classId)
+    .maybeSingle();
+  if (classError) throw classError;
+  if (!klass) return 'נדרשת כיתה';
+
+  const { data: school, error: schoolError } = await supabaseAdmin
+    .from('schools')
+    .select('id, code, student_quota')
+    .eq('id', klass.school_id)
+    .maybeSingle();
+  if (schoolError) throw schoolError;
+  if (!school || !school.code || school.code !== schoolCode) {
+    return 'טעות בקוד ביה"ס';
+  }
+
+  if (school.student_quota != null) {
+    const { data: classIds, error: classesError } = await supabaseAdmin
+      .from('classes')
+      .select('id')
+      .eq('school_id', school.id);
+    if (classesError) throw classesError;
+    const ids = (classIds ?? []).map((c: any) => c.id);
+    if (ids.length > 0) {
+      const { count, error: countError } = await supabaseAdmin
+        .from('users')
+        .select('id', { count: 'exact', head: true })
+        .eq('role', 'student')
+        .in('class_id', ids);
+      if (countError) throw countError;
+      if ((count ?? 0) >= school.student_quota) {
+        return 'מכסת הנרשמים מבית הספר הגיעה למקסימום. פנה למנהל.';
+      }
+    }
+  }
+
+  return null;
+}
+
 async function handleRegister(req: Request) {
   const body = await req.json().catch(() => ({}));
-  const { phone, username, department, password, biometricEnabled, role, classId } = body;
+  const { phone, username, department, password, biometricEnabled, role, classId, schoolCode } = body;
   const accountRole = role === 'student' ? 'student' : 'employee';
 
   if (!PHONE_RE.test(String(phone || '').trim())) return json({ error: 'מספר טלפון לא תקין' }, 400);
   if (!username || !String(username).trim()) return json({ error: 'נדרש שם משתמש' }, 400);
   if (!password || password.length < 6) return json({ error: 'הסיסמה צריכה להכיל לפחות 6 תווים' }, 400);
   if (accountRole === 'student' && !classId) return json({ error: 'נדרשת כיתה' }, 400);
+  if (accountRole === 'student' && !String(schoolCode || '').trim()) return json({ error: 'נדרש קוד בית ספר' }, 400);
+
+  if (accountRole === 'student') {
+    const validationError = await validateSchoolCodeAndQuota(Number(classId), String(schoolCode).trim());
+    if (validationError) return json({ error: validationError }, 400);
+  }
 
   const normalizedPhone = String(phone).trim();
   const { data: existing } = await supabaseAdmin.from('users').select('*').eq('phone', normalizedPhone).maybeSingle();
