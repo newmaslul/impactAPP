@@ -5,7 +5,7 @@
 import { corsHeaders, handleOptions, json } from '../_shared/cors.ts';
 import { supabaseAdmin } from '../_shared/supabaseAdmin.ts';
 
-const TYPES = ['steps', 'distance', 'sleep', 'class', 'grade'];
+const TYPES = ['steps', 'distance', 'sleep'];
 
 function restSegments(req: Request): string[] {
   const segments = new URL(req.url).pathname.split('/').filter(Boolean);

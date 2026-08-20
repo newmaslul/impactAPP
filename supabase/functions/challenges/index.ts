@@ -9,7 +9,7 @@ import { corsHeaders, handleOptions, json } from '../_shared/cors.ts';
 import { supabaseAdmin } from '../_shared/supabaseAdmin.ts';
 import { getUserIdFromRequest, AuthError } from '../_shared/auth.ts';
 import { todayStr } from '../_shared/scoring/dates.ts';
-import { getUserWithClass, computeProgress, statusFor, iconFor, subtitleFor } from '../_shared/challenges/service.ts';
+import { computeProgress, statusFor, iconFor, subtitleFor } from '../_shared/challenges/service.ts';
 
 function restSegments(req: Request): string[] {
   const segments = new URL(req.url).pathname.split('/').filter(Boolean);
@@ -36,7 +36,6 @@ Deno.serve(async (req) => {
 
 async function handleList(req: Request) {
   const userId = getUserIdFromRequest(req);
-  const { userClass } = await getUserWithClass(userId);
   const today = todayStr();
 
   const { data: challenges, error } = await supabaseAdmin.from('challenges').select('*').order('start_date', { ascending: true });
@@ -47,7 +46,7 @@ async function handleList(req: Request) {
 
   for (const c of challenges ?? []) {
     const status = statusFor(c, today);
-    const current = await computeProgress(userId, userClass, c);
+    const current = await computeProgress(userId, c);
     const item = {
       id: c.id,
       icon: iconFor(c.type),
@@ -69,14 +68,13 @@ async function handleList(req: Request) {
 
 async function handleDetail(req: Request, id: string) {
   const userId = getUserIdFromRequest(req);
-  const { userClass } = await getUserWithClass(userId);
   const today = todayStr();
 
   const { data: c, error } = await supabaseAdmin.from('challenges').select('*').eq('id', id).maybeSingle();
   if (error) throw error;
   if (!c) return json({ error: 'האתגר לא נמצא' }, 404);
 
-  const current = await computeProgress(userId, userClass, c);
+  const current = await computeProgress(userId, c);
   const status = statusFor(c, today);
 
   return json({

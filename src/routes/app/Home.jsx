@@ -104,7 +104,7 @@ function HomeEmployee() {
       </section>
 
       <ChallengeCard challenge={DAILY_CHALLENGE_PREVIEW} onDetails={() => navigate(`/app/challenges/${DAILY_CHALLENGE_PREVIEW.id}`)} />
-      <ChallengeCard challenge={CLASS_CHALLENGE_PREVIEW} onDetails={() => navigate(`/app/challenges/${CLASS_CHALLENGE_PREVIEW.id}`)} />
+      <ChallengeCard challenge={CLASS_CHALLENGE_PREVIEW} onDetails={() => navigate('/app/class-ranking')} />
 
       <div className="stat-grid">
         <div className="card stat-tile">

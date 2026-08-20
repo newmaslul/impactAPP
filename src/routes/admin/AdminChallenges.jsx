@@ -97,6 +97,7 @@ export default function AdminChallenges() {
                 <tr>
                   <th>שם</th>
                   <th>סוג</th>
+                  <th>שכבה</th>
                   <th>תקופה</th>
                   <th>יעד</th>
                   <th>סטטוס</th>
@@ -113,6 +114,7 @@ export default function AdminChallenges() {
                       <td>
                         <span aria-hidden="true">{t.icon}</span> {t.label}
                       </td>
+                      <td>{c.audience?.includes('grade') ? '✓' : '—'}</td>
                       <td className="admin-table__points">{formatDate(c.start_date)} — {formatDate(c.end_date)}</td>
                       <td className="admin-table__points">{formatNumber(c.goal)}</td>
                       <td>

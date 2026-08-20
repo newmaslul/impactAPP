@@ -20,12 +20,12 @@ function PodiumSpot({ entry, place }) {
 }
 
 /**
- * Ranking for a 'class' or 'grade'-typed challenge (see ChallengeDetail.jsx,
- * which passes `challengeId`/`title`/`type` after fetching the challenge).
- * `challengeId` is optional — without it this falls back to its original
- * standalone behavior (every class, current calendar week).
+ * Standalone "אתגר כיתתי" ranking, reached from its preview card on Home
+ * (not tied to an admin-created challenge — see challengeTypes.js).
+ * Scoped server-side to the viewer's own school and grade, so this only
+ * ever shows classes that are a fair, relevant comparison.
  */
-export default function ClassRanking({ challengeId, title, type }) {
+export default function ClassRanking() {
   const navigate = useNavigate();
   const [ranking, setRanking] = useState(null);
   // Tracked separately from `ranking` — see Learning.jsx for why a
@@ -37,20 +37,19 @@ export default function ClassRanking({ challengeId, title, type }) {
     setLoading(true);
     setError('');
     api
-      .classRanking(challengeId)
+      .classRanking()
       .then(({ ranking }) => setRanking(ranking))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   };
 
-  useEffect(load, [challengeId]);
+  useEffect(load, []);
 
   const [first, second, third, ...rest] = ranking ?? [];
-  const pageTitle = type === 'grade' ? 'דירוג שכבתי' : 'דירוג כיתתי';
 
   return (
     <div className="detail-section">
-      <SubPageHeader title={pageTitle} onBack={() => navigate('/app/challenges')} />
+      <SubPageHeader title="דירוג כיתתי" onBack={() => navigate('/app/challenges')} />
 
       {loading && <p className="admin-table__empty">טוען…</p>}
 
@@ -64,12 +63,12 @@ export default function ClassRanking({ challengeId, title, type }) {
       )}
 
       {!loading && !error && (ranking ?? []).length === 0 && (
-        <p className="org-empty">{type === 'grade' ? 'אין עדיין שכבות לדירוג' : 'אין עדיין כיתות לדירוג'}</p>
+        <p className="org-empty">אין עדיין כיתות לדירוג בשכבה שלך</p>
       )}
 
       {!loading && !error && (ranking ?? []).length > 0 && (
         <section className="card">
-          <p className="card__label">{title ?? pageTitle}</p>
+          <p className="card__label">השבוע</p>
           {first && (
             <div className="podium">
               {second && <PodiumSpot entry={second} place={2} />}

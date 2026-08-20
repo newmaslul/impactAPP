@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../lib/api.js';
+import { GRADE_OPTIONS } from '../../lib/challengeTypes.js';
 
 export default function AdminSchools() {
   const [schools, setSchools] = useState([]);
@@ -282,14 +283,15 @@ export default function AdminSchools() {
                         />
                       </td>
                       <td>
-                        <input
-                          type="text"
+                        <select
                           className="text-input"
-                          placeholder="לדוגמה ה'"
                           value={classEdit.grade}
                           onChange={(e) => setClassEdit((prev) => ({ ...prev, grade: e.target.value }))}
                           style={{ width: '5rem' }}
-                        />
+                        >
+                          <option value="">—</option>
+                          {GRADE_OPTIONS.map((g) => <option key={g} value={g}>{g}</option>)}
+                        </select>
                       </td>
                       <td>
                         <select
@@ -337,14 +339,15 @@ export default function AdminSchools() {
             value={newClassName}
             onChange={(e) => setNewClassName(e.target.value)}
           />
-          <input
-            type="text"
+          <select
             className="text-input"
-            placeholder="שכבה (לדוגמה ה')"
             value={newClassGrade}
             onChange={(e) => setNewClassGrade(e.target.value)}
             style={{ maxWidth: '8rem' }}
-          />
+          >
+            <option value="">שכבה</option>
+            {GRADE_OPTIONS.map((g) => <option key={g} value={g}>{g}</option>)}
+          </select>
           <button type="submit" className="btn-primary" style={{ width: 'auto', padding: '0.85rem 1.3rem' }}>הוסף</button>
         </form>
       </section>
