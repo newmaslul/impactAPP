@@ -12,6 +12,8 @@ const ACTIVE_CHALLENGES = [
     icon: '🎯',
     title: 'אתגר יומי',
     subtitle: 'הליכה של 10,000 צעדים',
+    current: 10000,
+    goal: 10000,
     done: true,
   },
   {
@@ -27,6 +29,8 @@ const ACTIVE_CHALLENGES = [
     icon: '👨‍👩‍👧',
     title: 'אתגר כיתתי',
     subtitle: 'הכיתה שהולכת הכי הרבה',
+    current: 7450, // same numbers Home's CLASS_CHALLENGE_PREVIEW already shows for this id
+    goal: 20000,
     daysLeft: 2,
   },
 ];
