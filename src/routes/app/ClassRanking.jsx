@@ -19,7 +19,13 @@ function PodiumSpot({ entry, place }) {
   );
 }
 
-export default function ClassRanking() {
+/**
+ * Ranking for a 'class' or 'grade'-typed challenge (see ChallengeDetail.jsx,
+ * which passes `challengeId`/`title`/`type` after fetching the challenge).
+ * `challengeId` is optional — without it this falls back to its original
+ * standalone behavior (every class, current calendar week).
+ */
+export default function ClassRanking({ challengeId, title, type }) {
   const navigate = useNavigate();
   const [ranking, setRanking] = useState(null);
   // Tracked separately from `ranking` — see Learning.jsx for why a
@@ -31,19 +37,20 @@ export default function ClassRanking() {
     setLoading(true);
     setError('');
     api
-      .classRanking()
+      .classRanking(challengeId)
       .then(({ ranking }) => setRanking(ranking))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   };
 
-  useEffect(load, []);
+  useEffect(load, [challengeId]);
 
   const [first, second, third, ...rest] = ranking ?? [];
+  const pageTitle = type === 'grade' ? 'דירוג שכבתי' : 'דירוג כיתתי';
 
   return (
     <div className="detail-section">
-      <SubPageHeader title="דירוג כיתתי" onBack={() => navigate('/app/challenges')} />
+      <SubPageHeader title={pageTitle} onBack={() => navigate('/app/challenges')} />
 
       {loading && <p className="admin-table__empty">טוען…</p>}
 
@@ -57,12 +64,12 @@ export default function ClassRanking() {
       )}
 
       {!loading && !error && (ranking ?? []).length === 0 && (
-        <p className="org-empty">אין עדיין כיתות לדירוג</p>
+        <p className="org-empty">{type === 'grade' ? 'אין עדיין שכבות לדירוג' : 'אין עדיין כיתות לדירוג'}</p>
       )}
 
       {!loading && !error && (ranking ?? []).length > 0 && (
         <section className="card">
-          <p className="card__label">השבוע</p>
+          <p className="card__label">{title ?? pageTitle}</p>
           {first && (
             <div className="podium">
               {second && <PodiumSpot entry={second} place={2} />}

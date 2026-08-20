@@ -55,6 +55,7 @@ async function handleList() {
     id: c.id,
     school_id: c.school_id,
     name: c.name,
+    grade: c.grade,
     created_at: c.created_at,
     school_name: c.schools?.name ?? null,
     student_count: counts[c.id] ?? 0,
@@ -64,13 +65,17 @@ async function handleList() {
 }
 
 async function handleCreate(req: Request) {
-  const { name, schoolId } = await req.json().catch(() => ({}));
+  const { name, schoolId, grade } = await req.json().catch(() => ({}));
   if (!name || !String(name).trim()) return json({ error: 'נדרש שם כיתה' }, 400);
   if (!schoolId) return json({ error: 'נדרש בית ספר' }, 400);
 
   const { data, error } = await supabaseAdmin
     .from('classes')
-    .insert({ name: String(name).trim(), school_id: schoolId })
+    .insert({
+      name: String(name).trim(),
+      school_id: schoolId,
+      grade: grade && String(grade).trim() ? String(grade).trim() : null,
+    })
     .select()
     .single();
   if (error) throw error;
@@ -89,6 +94,9 @@ async function handleUpdate(req: Request, id: string) {
   if (body.schoolId !== undefined) {
     if (!body.schoolId) return json({ error: 'נדרש בית ספר' }, 400);
     patch.school_id = body.schoolId;
+  }
+  if (body.grade !== undefined) {
+    patch.grade = body.grade && String(body.grade).trim() ? String(body.grade).trim() : null;
   }
 
   const { data, error } = await supabaseAdmin.from('classes').update(patch).eq('id', id).select().maybeSingle();

@@ -1,19 +1,5 @@
 import { useState } from 'react';
-
-const TYPES = [
-  { id: 'steps', label: 'צעדים', icon: '👣' },
-  { id: 'activity', label: 'פעילות', icon: '🏃' },
-  { id: 'sleep', label: 'שינה', icon: '😴' },
-  { id: 'team', label: 'צוות', icon: '👥' },
-  { id: 'impact', label: 'Impact', icon: '❤️' },
-  { id: 'community', label: 'קהילה', icon: '🏘️' },
-];
-
-const AUDIENCE_OPTIONS = [
-  { id: 'company', label: 'כל החברה' },
-  { id: 'departments', label: 'מחלקות' },
-  { id: 'groups', label: 'קבוצות נבחרות' },
-];
+import { CHALLENGE_TYPES, CHALLENGE_AUDIENCE_OPTIONS } from '../../lib/challengeTypes.js';
 
 export default function ChallengeForm({ onCancel, onSubmit }) {
   const [name, setName] = useState('');
@@ -21,8 +7,7 @@ export default function ChallengeForm({ onCancel, onSubmit }) {
   const [start, setStart] = useState('');
   const [end, setEnd] = useState('');
   const [goal, setGoal] = useState('');
-  const [reward, setReward] = useState('');
-  const [audience, setAudience] = useState(['company']);
+  const [audience, setAudience] = useState([]);
   const [error, setError] = useState('');
 
   const toggleAudience = (id) => {
@@ -38,7 +23,7 @@ export default function ChallengeForm({ onCancel, onSubmit }) {
     if (audience.length === 0) return setError('נדרשת לפחות קבוצת יעד אחת');
 
     setError('');
-    onSubmit({ name: name.trim(), type, start, end, goal: Number(goal), reward: Number(reward) || 0, audience });
+    onSubmit({ name: name.trim(), type, start, end, goal: Number(goal), audience });
   };
 
   return (
@@ -63,7 +48,7 @@ export default function ChallengeForm({ onCancel, onSubmit }) {
         <div className="field">
           <label>סוג</label>
           <div className="type-grid" role="radiogroup" aria-label="סוג אתגר">
-            {TYPES.map((t) => {
+            {CHALLENGE_TYPES.map((t) => {
               const selected = type === t.id;
               return (
                 <button
@@ -110,26 +95,9 @@ export default function ChallengeForm({ onCancel, onSubmit }) {
         </div>
 
         <div className="field">
-          <label htmlFor="challenge-reward">פרס</label>
-          <div className="field-suffix-row">
-            <input
-              id="challenge-reward"
-              type="number"
-              min="0"
-              className="text-input"
-              placeholder="20,000"
-              value={reward}
-              onChange={(e) => setReward(e.target.value)}
-              dir="ltr"
-            />
-            <span className="field-suffix">₪ לקהילה</span>
-          </div>
-        </div>
-
-        <div className="field">
           <label>קבוצות</label>
           <div className="checkbox-list">
-            {AUDIENCE_OPTIONS.map((opt) => (
+            {CHALLENGE_AUDIENCE_OPTIONS.map((opt) => (
               <label className="checkbox-row" key={opt.id}>
                 <input
                   type="checkbox"

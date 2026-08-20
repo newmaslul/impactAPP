@@ -9,6 +9,7 @@ export default function AdminSchools() {
   const [newSchoolQuota, setNewSchoolQuota] = useState('');
   const [newClassName, setNewClassName] = useState('');
   const [newClassSchoolId, setNewClassSchoolId] = useState('');
+  const [newClassGrade, setNewClassGrade] = useState('');
   const [error, setError] = useState('');
 
   // Inline-edit state: which row (by id) is being edited, and its
@@ -19,7 +20,7 @@ export default function AdminSchools() {
   const [savingSchool, setSavingSchool] = useState(false);
 
   const [editingClassId, setEditingClassId] = useState(null);
-  const [classEdit, setClassEdit] = useState({ name: '', schoolId: '' });
+  const [classEdit, setClassEdit] = useState({ name: '', schoolId: '', grade: '' });
   const [savingClass, setSavingClass] = useState(false);
 
   const load = () => {
@@ -54,8 +55,13 @@ export default function AdminSchools() {
     e.preventDefault();
     if (!newClassName.trim() || !newClassSchoolId) return;
     try {
-      await api.adminCreateClass({ name: newClassName.trim(), schoolId: Number(newClassSchoolId) });
+      await api.adminCreateClass({
+        name: newClassName.trim(),
+        schoolId: Number(newClassSchoolId),
+        grade: newClassGrade.trim() || null,
+      });
       setNewClassName('');
+      setNewClassGrade('');
       load();
     } catch (err) {
       setError(err.message);
@@ -119,7 +125,7 @@ export default function AdminSchools() {
   const startEditingClass = (c) => {
     setError('');
     setEditingClassId(c.id);
-    setClassEdit({ name: c.name ?? '', schoolId: String(c.school_id ?? '') });
+    setClassEdit({ name: c.name ?? '', schoolId: String(c.school_id ?? ''), grade: c.grade ?? '' });
   };
 
   const cancelEditingClass = () => {
@@ -137,6 +143,7 @@ export default function AdminSchools() {
       await api.adminUpdateClass(id, {
         name: classEdit.name.trim(),
         schoolId: Number(classEdit.schoolId),
+        grade: classEdit.grade.trim() || null,
       });
       setEditingClassId(null);
       load();
@@ -259,7 +266,7 @@ export default function AdminSchools() {
         <p className="card__label">כיתות</p>
         <div className="admin-table-wrap">
           <table className="admin-table">
-            <thead><tr><th>כיתה</th><th>בית ספר</th><th>תלמידים</th><th></th></tr></thead>
+            <thead><tr><th>כיתה</th><th>שכבה</th><th>בית ספר</th><th>תלמידים</th><th></th></tr></thead>
             <tbody>
               {classes.map((c) => {
                 const isEditing = editingClassId === c.id;
@@ -272,6 +279,16 @@ export default function AdminSchools() {
                           className="text-input"
                           value={classEdit.name}
                           onChange={(e) => setClassEdit((prev) => ({ ...prev, name: e.target.value }))}
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="text"
+                          className="text-input"
+                          placeholder="לדוגמה ה'"
+                          value={classEdit.grade}
+                          onChange={(e) => setClassEdit((prev) => ({ ...prev, grade: e.target.value }))}
+                          style={{ width: '5rem' }}
                         />
                       </td>
                       <td>
@@ -296,6 +313,7 @@ export default function AdminSchools() {
                 return (
                   <tr key={c.id}>
                     <td className="admin-table__name">{c.name}</td>
+                    <td>{c.grade ?? '—'}</td>
                     <td>{c.school_name}</td>
                     <td>{c.student_count}</td>
                     <td style={{ display: 'flex', gap: '0.5rem' }}>
@@ -318,6 +336,14 @@ export default function AdminSchools() {
             placeholder="שם כיתה (לדוגמה ה'1)"
             value={newClassName}
             onChange={(e) => setNewClassName(e.target.value)}
+          />
+          <input
+            type="text"
+            className="text-input"
+            placeholder="שכבה (לדוגמה ה')"
+            value={newClassGrade}
+            onChange={(e) => setNewClassGrade(e.target.value)}
+            style={{ maxWidth: '8rem' }}
           />
           <button type="submit" className="btn-primary" style={{ width: 'auto', padding: '0.85rem 1.3rem' }}>הוסף</button>
         </form>

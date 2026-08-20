@@ -1,15 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import ChallengeForm from './ChallengeForm.jsx';
+import { challengeTypeMeta } from '../../lib/challengeTypes.js';
 import { formatNumber } from '../../lib/format.js';
-
-const TYPES = [
-  { id: 'steps', label: 'צעדים', icon: '👣' },
-  { id: 'activity', label: 'פעילות', icon: '🏃' },
-  { id: 'sleep', label: 'שינה', icon: '😴' },
-  { id: 'team', label: 'צוות', icon: '👥' },
-  { id: 'impact', label: 'Impact', icon: '❤️' },
-  { id: 'community', label: 'קהילה', icon: '🏘️' },
-];
+import { api } from '../../lib/api.js';
 
 const SCORING = [
   { label: 'פעילות', weight: 30 },
@@ -19,13 +12,13 @@ const SCORING = [
   { label: 'Impact', weight: 10 },
 ];
 
-const INITIAL_CHALLENGES = [
-  { id: 1, name: '30 ימים בתנועה', type: 'steps', start: '2026-08-01', end: '2026-08-30', goal: 1_000_000, status: 'active' },
-  { id: 2, name: 'אתגר מחלקות Q3', type: 'team', start: '2026-07-01', end: '2026-07-31', goal: 500_000, status: 'ended' },
-];
-
-function typeMeta(id) {
-  return TYPES.find((t) => t.id === id) ?? TYPES[0];
+// Status is derived from the dates every render rather than trusted from
+// a stored value — a challenge that was 'active' when created is 'ended'
+// by the time an admin looks at this list a month later.
+function statusFor(c, today) {
+  if (c.end_date < today) return 'ended';
+  if (c.start_date > today) return 'scheduled';
+  return 'active';
 }
 
 function statusLabel(status) {
@@ -41,19 +34,48 @@ function formatDate(iso) {
 }
 
 export default function AdminChallenges() {
-  const [challenges, setChallenges] = useState(INITIAL_CHALLENGES);
+  const [challenges, setChallenges] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [view, setView] = useState('list'); // 'list' | 'create'
 
-  const handleCreate = (challenge) => {
-    const today = new Date().toISOString().slice(0, 10);
-    const status = challenge.start > today ? 'scheduled' : 'active';
-    setChallenges((prev) => [{ ...challenge, id: Date.now(), status }, ...prev]);
-    setView('list');
+  const load = () => {
+    setLoading(true);
+    setError('');
+    api
+      .adminListChallenges()
+      .then(({ challenges }) => setChallenges(challenges))
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(load, []);
+
+  const handleCreate = async (challenge) => {
+    try {
+      await api.adminCreateChallenge(challenge);
+      setView('list');
+      load();
+    } catch (err) {
+      setError(err.message);
+      setView('list');
+    }
+  };
+
+  const handleRemove = async (id) => {
+    try {
+      await api.adminDeleteChallenge(id);
+      load();
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   if (view === 'create') {
     return <ChallengeForm onCancel={() => setView('list')} onSubmit={handleCreate} />;
   }
+
+  const today = new Date().toISOString().slice(0, 10);
 
   return (
     <div className="admin-page">
@@ -64,38 +86,46 @@ export default function AdminChallenges() {
         </button>
       </div>
 
+      {error && <p className="form-error">{error}</p>}
+
       <section className="card">
-        <div className="admin-table-wrap">
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th>שם</th>
-                <th>סוג</th>
-                <th>תקופה</th>
-                <th>יעד</th>
-                <th>סטטוס</th>
-              </tr>
-            </thead>
-            <tbody>
-              {challenges.map((c) => {
-                const t = typeMeta(c.type);
-                return (
-                  <tr key={c.id}>
-                    <td className="admin-table__name">{c.name}</td>
-                    <td>
-                      <span aria-hidden="true">{t.icon}</span> {t.label}
-                    </td>
-                    <td className="admin-table__points">{formatDate(c.start)} — {formatDate(c.end)}</td>
-                    <td className="admin-table__points">{formatNumber(c.goal)} נק'</td>
-                    <td>
-                      <span className={`status-pill status-pill--${c.status}`}>{statusLabel(c.status)}</span>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        {loading && <p className="admin-table__empty">טוען…</p>}
+        {!loading && (
+          <div className="admin-table-wrap">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>שם</th>
+                  <th>סוג</th>
+                  <th>תקופה</th>
+                  <th>יעד</th>
+                  <th>סטטוס</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {challenges.map((c) => {
+                  const t = challengeTypeMeta(c.type);
+                  const status = statusFor(c, today);
+                  return (
+                    <tr key={c.id}>
+                      <td className="admin-table__name">{c.name}</td>
+                      <td>
+                        <span aria-hidden="true">{t.icon}</span> {t.label}
+                      </td>
+                      <td className="admin-table__points">{formatDate(c.start_date)} — {formatDate(c.end_date)}</td>
+                      <td className="admin-table__points">{formatNumber(c.goal)}</td>
+                      <td>
+                        <span className={`status-pill status-pill--${status}`}>{statusLabel(status)}</span>
+                      </td>
+                      <td><button type="button" className="link-btn link-btn--danger" onClick={() => handleRemove(c.id)}>הסר</button></td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
 
       <section className="card">

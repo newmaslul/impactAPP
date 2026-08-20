@@ -1,43 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ProgressBar from '../../components/ProgressBar.jsx';
 import { formatNumber } from '../../lib/format.js';
-
-// Mock data — will come from the backend once challenges are configurable (§12).
-// Order: יומי, שבועי, כיתתי — per explicit request, not the order these
-// happen to be keyed/defined in.
-const ACTIVE_CHALLENGES = [
-  {
-    id: 'daily-goal',
-    icon: '🎯',
-    title: 'אתגר יומי',
-    subtitle: 'הליכה של 10,000 צעדים',
-    current: 10000,
-    goal: 10000,
-    done: true,
-  },
-  {
-    id: 'weekly-steps',
-    icon: '🏆',
-    title: 'אתגר שבועי',
-    subtitle: 'לכו 70,000 צעדים השבוע',
-    current: 48200,
-    goal: 70000,
-  },
-  {
-    id: 'move-30-days',
-    icon: '👨‍👩‍👧',
-    title: 'אתגר כיתתי',
-    subtitle: 'הכיתה שהולכת הכי הרבה',
-    current: 7450, // same numbers Home's CLASS_CHALLENGE_PREVIEW already shows for this id
-    goal: 20000,
-    daysLeft: 2,
-  },
-];
-
-const COMPLETED_CHALLENGES = [
-  { id: 'last-month', icon: '✅', title: 'אתגר החודש שעבר', subtitle: '400,000 צעדים כקבוצה', points: 800 },
-];
+import { api } from '../../lib/api.js';
 
 export function ChallengeCard({ challenge, onDetails }) {
   const pct = challenge.goal ? Math.round((challenge.current / challenge.goal) * 100) : null;
@@ -84,7 +49,25 @@ export function ChallengeCard({ challenge, onDetails }) {
 export default function Challenges() {
   const navigate = useNavigate();
   const [tab, setTab] = useState('active');
-  const list = tab === 'active' ? ACTIVE_CHALLENGES : COMPLETED_CHALLENGES;
+  const [data, setData] = useState({ active: [], completed: [] });
+  // Tracked separately from `data` — see Learning.jsx for why a failed
+  // fetch must not leave the loading state stuck forever.
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  const load = () => {
+    setLoading(true);
+    setError('');
+    api
+      .listChallenges()
+      .then(setData)
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(load, []);
+
+  const list = tab === 'active' ? data.active : data.completed;
 
   return (
     <div className="home">
@@ -111,9 +94,25 @@ export default function Challenges() {
         </button>
       </div>
 
-      {list.map((challenge) => (
-        <ChallengeCard key={challenge.id} challenge={challenge} onDetails={() => navigate(`/app/challenges/${challenge.id}`)} />
-      ))}
+      {loading && <p className="admin-table__empty">טוען…</p>}
+
+      {!loading && error && (
+        <div className="card">
+          <p className="form-error">לא הצלחנו לטעון את האתגרים. {error}</p>
+          <button type="button" className="btn-ghost btn-ghost--block" onClick={load}>
+            נסו שוב
+          </button>
+        </div>
+      )}
+
+      {!loading && !error && list.length === 0 && (
+        <p className="org-empty">{tab === 'active' ? 'אין כרגע אתגרים פעילים' : 'עוד לא הסתיימו אתגרים'}</p>
+      )}
+
+      {!loading && !error &&
+        list.map((challenge) => (
+          <ChallengeCard key={challenge.id} challenge={challenge} onDetails={() => navigate(`/app/challenges/${challenge.id}`)} />
+        ))}
     </div>
   );
 }
