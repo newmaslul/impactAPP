@@ -1,6 +1,7 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import SubPageHeader from '../../components/SubPageHeader.jsx';
 import ProgressBar from '../../components/ProgressBar.jsx';
+import ClassRanking from './ClassRanking.jsx';
 import { formatNumber } from '../../lib/format.js';
 
 // Mock data for the one challenge defined in §6. Once challenges are
@@ -16,6 +17,14 @@ const CHALLENGE = {
 
 export default function ChallengeDetail() {
   const navigate = useNavigate();
+  const { id } = useParams();
+
+  // The class challenge ("אתגר כיתתי", id 'move-30-days' — see
+  // Challenges.jsx/Home.jsx/HomeStudent.jsx) gets its own dedicated
+  // ranking screen instead of the generic day-grid detail below, which
+  // doesn't apply to a whole-class step total.
+  if (id === 'move-30-days') return <ClassRanking />;
+
   const { days, totalDays } = CHALLENGE;
 
   return (
