@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PedometerBanner from '../../components/PedometerBanner.jsx';
-import HealthConnectionCard from '../../components/health/HealthConnectionCard.jsx';
 import StepRing from '../../components/StepRing.jsx';
 import HeroIllustration from '../../components/HeroIllustration.jsx';
 import LevelBadgeCard from '../../components/LevelBadgeCard.jsx';
@@ -92,7 +91,6 @@ export default function HomeStudent() {
       <p className="home__greeting">שלום {user.username} 👋</p>
 
       <PedometerBanner status={sensorStatus} requestPermission={requestPermission} />
-      <HealthConnectionCard />
 
       {error && <p className="form-error">{error}</p>}
 
