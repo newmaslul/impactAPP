@@ -760,6 +760,7 @@ a { touch-action: manipulation; }
 
 .bottom-nav__item--active {
   color: var(--blue-deep);
+  background: var(--surface-selected);
 }
 
 .bottom-nav__icon { font-size: 1.25rem; }
@@ -960,7 +961,7 @@ a { touch-action: manipulation; }
 
 .stat-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: 1fr 1fr;
   gap: 0.9rem;
 }
 
@@ -1287,7 +1288,7 @@ a { touch-action: manipulation; }
    per PRODUCT_SPEC.md §14) is the primary accent rather than a hint. */
 .badge-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: 1fr 1fr;
   gap: 0.7rem;
 }
 
@@ -1313,7 +1314,7 @@ a { touch-action: manipulation; }
 
 .ghost-row {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 0.8rem;
 }
 
@@ -1749,7 +1750,7 @@ a { touch-action: manipulation; }
 
 .type-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: 1fr 1fr;
   gap: 0.6rem;
 }
 
@@ -1909,7 +1910,7 @@ a { touch-action: manipulation; }
 .score-hero__delta--down { color: var(--ink-soft); }
 
 .stat-grid--4 {
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: 1fr 1fr;
 }
 
 .stat-tile__sub {
@@ -1936,6 +1937,484 @@ a { touch-action: manipulation; }
   margin-top: 0.4rem;
   font-size: 0.85rem;
   color: var(--ink-soft);
+}
+
+/* ---------------------------------------------------------------
+   Redesign pass (demo skin) — screenshot-driven visuals for Home,
+   Challenges, Group (class ranking) and Profile (achievements).
+   Additive: reuses existing tokens/.card, doesn't touch anything
+   above. Quick-and-dirty by design — this is a pre-demo reskin,
+   not a new design system.
+----------------------------------------------------------------*/
+
+/* ---------- Home top bar (hamburger / title / notifications) ---------- */
+
+.home-topbar {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 1.2rem;
+}
+
+.home-topbar__icon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-pill);
+  border: none;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 1.15rem;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.home-topbar__title {
+  flex: 1;
+  text-align: center;
+  font-weight: 800;
+  font-size: 1.15rem;
+  color: var(--ink);
+}
+
+.home-topbar__badge {
+  position: absolute;
+  top: -2px;
+  inset-inline-end: -2px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: var(--radius-pill);
+  background: var(--orange-achieve);
+  color: var(--white);
+  font-size: 0.66rem;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--white);
+}
+
+/* ---------- Hero step ring card + illustration ---------- */
+
+.hero-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(180deg, #eaf4ff 0%, #ffffff 60%);
+  border: 1px solid var(--hairline);
+  box-shadow: var(--shadow-card);
+  padding: 1.6rem 1.2rem 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.hero-card__goal {
+  margin-top: 0.4rem;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--ink-soft);
+}
+
+.hero-card__illustration {
+  width: calc(100% + 2.4rem);
+  margin: 1.2rem -1.2rem 0;
+  line-height: 0;
+}
+
+.hero-card__illustration svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.step-ring {
+  position: relative;
+}
+
+.step-ring__track {
+  stroke: var(--surface);
+}
+
+.step-ring__fill {
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.6s ease;
+}
+
+.step-ring__center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.step-ring__value {
+  font-family: 'Heebo', 'Segoe UI', Arial, sans-serif;
+  font-weight: 800;
+  font-size: clamp(2rem, 9vw, 2.5rem);
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.step-ring__label {
+  margin-top: 0.35rem;
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--ink-soft);
+}
+
+/* ---------- Reward unlock banner ---------- */
+
+.unlock-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.85rem 1.1rem;
+  border-radius: var(--radius-pill);
+  background: var(--surface-selected);
+  border: 1px solid rgba(62, 158, 255, 0.2);
+}
+
+.unlock-banner__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--teal-impact);
+  color: var(--white);
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.unlock-banner__text {
+  flex: 1;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--ink);
+}
+
+.unlock-banner__gift {
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+
+.stat-grid--3 {
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.6rem;
+}
+
+.stat-grid--3 .stat-tile {
+  padding: 0.9rem 0.5rem;
+}
+
+/* ---------- Tab switch (Challenges: פעילים / הסתיימו) ---------- */
+
+.tab-switch {
+  display: flex;
+  padding: 0.3rem;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  gap: 0.3rem;
+}
+
+.tab-switch__btn {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 0.65rem 0.5rem;
+  border-radius: var(--radius-pill);
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.tab-switch__btn--active {
+  background: var(--white);
+  color: var(--blue-deep);
+  box-shadow: var(--shadow-card);
+}
+
+/* ---------- Challenge cards (weekly / class / daily) ---------- */
+
+.challenge-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.challenge-card__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.challenge-card__title {
+  font-weight: 700;
+  font-size: 1.02rem;
+  color: var(--ink);
+}
+
+.challenge-card__subtitle {
+  margin-top: 0.3rem;
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+}
+
+.challenge-card__icon {
+  font-size: 1.7rem;
+  flex-shrink: 0;
+}
+
+.challenge-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.challenge-card__progress-note {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.challenge-card__meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: var(--ink-faint);
+  font-weight: 600;
+}
+
+.challenge-card__cta {
+  width: auto;
+  padding: 0.55rem 1.15rem;
+  font-size: 0.85rem;
+}
+
+.challenge-card__done {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--teal-impact);
+  font-weight: 700;
+  font-size: 0.92rem;
+}
+
+/* ---------- Class ranking: podium + rank list ---------- */
+
+.podium {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 0.7rem;
+  padding: 1.5rem 0.2rem 0.4rem;
+}
+
+.podium__spot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.podium__crown {
+  font-size: 1.3rem;
+}
+
+.podium__avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1.2rem;
+  color: var(--white);
+  background: linear-gradient(135deg, var(--blue-deep), var(--teal-impact));
+  border: 3px solid var(--white);
+  box-shadow: var(--shadow-card);
+  flex-shrink: 0;
+}
+
+.podium__spot--first .podium__avatar {
+  width: 68px;
+  height: 68px;
+  font-size: 1.5rem;
+}
+
+.podium__name {
+  font-weight: 700;
+  font-size: 0.82rem;
+  color: var(--ink);
+  text-align: center;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.podium__points {
+  font-size: 0.76rem;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.podium__block {
+  width: 100%;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  background: var(--surface);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 0.5rem;
+  font-weight: 800;
+  color: var(--ink-soft);
+  font-size: 1.05rem;
+}
+
+.podium__spot--first .podium__block {
+  height: 74px;
+  background: linear-gradient(180deg, rgba(255, 138, 61, 0.2), rgba(255, 138, 61, 0.07));
+  color: var(--orange-achieve);
+}
+
+.podium__spot--second .podium__block { height: 54px; }
+.podium__spot--third .podium__block { height: 38px; }
+
+.rank-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.rank-row {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.6rem 0.7rem;
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.rank-row__place {
+  width: 1.5rem;
+  text-align: center;
+  font-weight: 800;
+  color: var(--ink-faint);
+}
+
+.rank-row__avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--blue-light), var(--teal-impact));
+  color: var(--white);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.rank-row__name {
+  flex: 1;
+  font-weight: 600;
+  color: var(--ink);
+  font-size: 0.92rem;
+}
+
+.rank-row__points {
+  font-weight: 700;
+  color: var(--ink-soft);
+  font-size: 0.88rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Achievement badge grid (Profile) ---------- */
+
+.achieve-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem 0.6rem;
+}
+
+.achieve-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  text-align: center;
+}
+
+.achieve-badge__circle {
+  position: relative;
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  background: linear-gradient(160deg, rgba(255, 138, 61, 0.22), rgba(255, 138, 61, 0.08));
+  border: 2px solid rgba(255, 138, 61, 0.3);
+}
+
+.achieve-badge__label {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--ink-soft);
+  line-height: 1.3;
+}
+
+.achieve-badge--locked .achieve-badge__circle {
+  background: var(--surface);
+  border-color: var(--hairline);
+  filter: grayscale(1);
+  opacity: 0.75;
+}
+
+.achieve-badge--locked .achieve-badge__label {
+  color: var(--ink-faint);
+}
+
+.achieve-badge__lock {
+  position: absolute;
+  bottom: -3px;
+  inset-inline-end: -3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--white);
+  border: 1px solid var(--hairline);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.68rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .step-ring__fill { transition: none; }
 }
 
 /* ---------- Learning (video library) ---------- */
@@ -2091,4 +2570,140 @@ a { touch-action: manipulation; }
 .learning-benefits__item span {
   color: var(--teal-impact);
   font-weight: 700;
+}
+
+/* ---------- Home hero scene (illustrated background + step rings) ---------- */
+
+.hero-scene {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--hairline);
+  min-height: 300px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 1.2rem 1rem 1.6rem;
+}
+
+.hero-scene__bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+.hero-scene__rings {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: 0.9rem;
+  width: 100%;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.hero-scene__ring-block {
+  flex: 1;
+  max-width: 170px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.hero-scene__ring-title {
+  font-weight: 700;
+  font-size: 0.82rem;
+  color: var(--ink);
+  background: var(--white);
+  padding: 0.3rem 0.7rem;
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-card);
+  text-align: center;
+}
+
+.hero-scene__ring-block .step-ring {
+  background: var(--white);
+  border-radius: 50%;
+  box-shadow: var(--shadow-card);
+}
+
+.hero-scene__ring-block .step-ring__value {
+  font-size: 1.5rem;
+}
+
+.hero-scene__ring-block .step-ring__label {
+  margin-top: 0.1rem;
+  font-size: 0.78rem;
+}
+
+.hero-scene__ring-sub {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  background: var(--white);
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-card);
+}
+
+.step-ring__icon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+/* ---------- Level badge card ---------- */
+
+.level-badge-card__row {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  margin-bottom: 0.8rem;
+}
+
+.level-badge-card__shield {
+  position: relative;
+  font-size: 2.2rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.level-badge-card__crown {
+  position: absolute;
+  top: -0.7rem;
+  inset-inline-start: 50%;
+  transform: translateX(-50%);
+  font-size: 1.1rem;
+}
+
+.level-badge-card__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.level-badge-card__label {
+  font-size: 0.8rem;
+  color: var(--ink-faint);
+}
+
+.level-badge-card__title {
+  font-family: 'Heebo', 'Segoe UI', Arial, sans-serif;
+  font-weight: 800;
+  font-size: 1.15rem;
+  color: var(--teal-impact);
+}
+
+.level-badge-card__star {
+  font-size: 1.6rem;
+  flex-shrink: 0;
+}
+
+.level-badge-card__caption {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  text-align: center;
 }

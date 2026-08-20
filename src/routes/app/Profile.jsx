@@ -8,10 +8,15 @@ const LEVEL = 8;
 const LEVEL_PROGRESS_PCT = 72;
 
 const BADGES = [
-  { icon: '🏅', label: '30 ימים' },
-  { icon: '❤️', label: 'משפיע' },
-  { icon: '👥', label: 'צוות' },
-  { icon: '🔥', label: '10 ימים רצופים' },
+  { icon: '🔥', label: '10,000 צעדים ביום', locked: false },
+  { icon: '🚶', label: 'ביקורים ברצף', locked: false },
+  { icon: '⭐', label: '20,000 צעדים ביום', locked: false },
+  { icon: '💪', label: '5 אימונים', locked: false },
+  { icon: '💧', label: 'שתיתי 7 ימים מים', locked: false },
+  { icon: '🌅', label: 'קמתי מוקדם', locked: false },
+  { icon: '🏆', label: '50,000 צעדים ברצף', locked: true },
+  { icon: '📅', label: '10 ימים ברצף', locked: true },
+  { icon: '🌙', label: '15 אימוני בוקר', locked: true },
 ];
 
 const STATS = [
@@ -47,11 +52,14 @@ export default function Profile() {
 
       <section className="card">
         <p className="card__label">🏆 ההישגים שלי</p>
-        <div className="badge-grid">
+        <div className="achieve-grid">
           {BADGES.map((b) => (
-            <div className="badge-chip" key={b.label}>
-              <span className="badge-chip__icon" aria-hidden="true">{b.icon}</span>
-              <span className="badge-chip__label">{b.label}</span>
+            <div className={`achieve-badge ${b.locked ? 'achieve-badge--locked' : ''}`} key={b.label}>
+              <span className="achieve-badge__circle" aria-hidden="true">
+                {b.icon}
+                {b.locked && <span className="achieve-badge__lock">🔒</span>}
+              </span>
+              <span className="achieve-badge__label">{b.label}</span>
             </div>
           ))}
         </div>
@@ -71,6 +79,7 @@ export default function Profile() {
       </section>
 
       <div className="ghost-row">
+        <button type="button" className="btn-ghost" onClick={() => navigate('/app/group')}>👥 קבוצה</button>
         <button type="button" className="btn-ghost" onClick={() => navigate('/app/impact')}>❤️ Impact</button>
         <button type="button" className="btn-ghost">הגדרות</button>
         <button type="button" className="btn-ghost">פרטיות</button>

@@ -11,20 +11,38 @@ const WEEKLY_STATS = [
   { icon: '❤️', n: 3200, label: 'נקודות Impact' },
 ];
 
-// Bar lengths as given in the wireframe, normalized to the longest bar.
-const MEMBERS = [
-  { name: 'איתי', pct: 89 },
-  { name: 'דנה', pct: 67 },
-  { name: 'יובל', pct: 100 },
-  { name: 'רון', pct: 56 },
+// Weekly class/group ranking — sorted high to low, as given in the wireframe.
+const RANKING = [
+  { name: 'הקבוצה של להן', points: 98450 },
+  { name: 'הקבוצה של פרועה', points: 87230 },
+  { name: 'הקבוצה של יעבל', points: 76890 },
+  { name: 'הקבוצה של דנה', points: 65430 },
+  { name: 'הקבוצה של מאי', points: 58210 },
+  { name: 'הקבוצה של אורי', points: 45670 },
 ];
+
+const initial = (name) => name.trim().split(' ').pop()[0];
+
+function PodiumSpot({ entry, place }) {
+  const tone = place === 1 ? 'first' : place === 2 ? 'second' : 'third';
+  return (
+    <div className={`podium__spot podium__spot--${tone}`}>
+      {place === 1 && <span className="podium__crown" aria-hidden="true">👑</span>}
+      <span className="podium__avatar" aria-hidden="true">{initial(entry.name)}</span>
+      <span className="podium__name">{entry.name}</span>
+      <span className="podium__points">{formatNumber(entry.points)}</span>
+      <div className="podium__block">{place}</div>
+    </div>
+  );
+}
 
 export default function Group() {
   const goalPct = (TEAM.points / TEAM.goal) * 100;
+  const [first, second, third, ...rest] = RANKING;
 
   return (
     <div className="home">
-      <h1 className="home__greeting">הקבוצה שלי</h1>
+      <h1 className="home__greeting">דירוג הקבוצה שלי</h1>
 
       <section className="card card--hero">
         <p className="card__label">{TEAM.name}</p>
@@ -37,6 +55,25 @@ export default function Group() {
       </section>
 
       <section className="card">
+        <p className="card__label">🏅 דירוג השבוע</p>
+        <div className="podium">
+          <PodiumSpot entry={second} place={2} />
+          <PodiumSpot entry={first} place={1} />
+          <PodiumSpot entry={third} place={3} />
+        </div>
+        <div className="rank-list">
+          {rest.map((entry, i) => (
+            <div className="rank-row" key={entry.name}>
+              <span className="rank-row__place">{i + 4}</span>
+              <span className="rank-row__avatar" aria-hidden="true">{initial(entry.name)}</span>
+              <span className="rank-row__name">{entry.name}</span>
+              <span className="rank-row__points">{formatNumber(entry.points)}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="card">
         <p className="card__label">השבוע שלנו</p>
         <div className="stat-row-list">
           {WEEKLY_STATS.map((s) => (
@@ -44,20 +81,6 @@ export default function Group() {
               <span className="stat-row__icon" aria-hidden="true">{s.icon}</span>
               <span className="stat-row__value">{s.compact ? formatCompact(s.n) : formatNumber(s.n)}</span>
               <span className="stat-row__label">{s.label}</span>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="card">
-        <p className="card__label">חברי הקבוצה</p>
-        <div className="member-list">
-          {MEMBERS.map((m) => (
-            <div className="member-row" key={m.name}>
-              <span className="member-row__name">{m.name}</span>
-              <span className="member-row__bar">
-                <ProgressBar value={m.pct} label={`${m.name}: ${m.pct}%`} />
-              </span>
             </div>
           ))}
         </div>

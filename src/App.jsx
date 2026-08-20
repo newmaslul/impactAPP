@@ -16,6 +16,7 @@ import Profile from './routes/app/Profile.jsx';
 import ActivityHistory from './routes/app/ActivityHistory.jsx';
 import Learning from './routes/app/Learning.jsx';
 import LearningDetail from './routes/app/LearningDetail.jsx';
+import Achievements from './routes/app/Achievements.jsx';
 import AdminShell from './routes/admin/AdminShell.jsx';
 import Dashboard from './routes/admin/Dashboard.jsx';
 import AdminChallenges from './routes/admin/AdminChallenges.jsx';
@@ -56,6 +57,7 @@ export default function App() {
         <Route path="activity-history" element={<ActivityHistory />} />
         <Route path="learning" element={<Learning />} />
         <Route path="learning/:id" element={<LearningDetail />} />
+        <Route path="achievements" element={<Achievements />} />
       </Route>
 
       <Route path="/admin" element={<AdminShell />}>

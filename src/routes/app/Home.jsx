@@ -1,13 +1,18 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import ProgressBar from '../../components/ProgressBar.jsx';
 import PedometerBanner from '../../components/PedometerBanner.jsx';
 import SleepCard from '../../components/SleepCard.jsx';
 import HealthConnectionCard from '../../components/health/HealthConnectionCard.jsx';
+import StepRing from '../../components/StepRing.jsx';
+import HeroIllustration from '../../components/HeroIllustration.jsx';
+import LevelBadgeCard from '../../components/LevelBadgeCard.jsx';
 import { usePedometer } from '../../hooks/usePedometer.js';
 import { useSleepSensor } from '../../hooks/useSleepSensor.js';
 import { useCurrentUser } from '../../context/CurrentUserContext.jsx';
 import { api } from '../../lib/api.js';
 import HomeStudent from './HomeStudent.jsx';
+import { ChallengeCard } from './Challenges.jsx';
 
 const SLEEP_REFRESH_INTERVAL_MS = 8000;
 
@@ -21,7 +26,42 @@ const ACTIVITY_MIN = 34;
 const TASK = { title: 'הליכה של 20 דקות', subtitle: 'עם עובד מהצוות', points: 100 };
 const TEAM = { points: 78420, goal: 100000 };
 
+// Weekly steps aren't tracked anywhere yet (only "today" is, via the live
+// sensor) — this is a fixed demo number, same convention as DEMO_STEPS,
+// until a real weekly aggregate exists.
+const DEMO_WEEKLY_STEPS = 42350;
+const WEEKLY_GOAL = 50000;
+
+const LEVEL_TITLE = 'שחקן מתמיד';
+const LEVEL_PROGRESS_PCT = 72;
+
+// Lightweight previews of two real challenges (Challenges.jsx owns the
+// full list) — same shape ChallengeCard already expects, so this reuses
+// that component as-is rather than a parallel card implementation.
+const DAILY_CHALLENGE_PREVIEW = {
+  id: 'daily-goal',
+  icon: '🔥',
+  title: 'אתגר יומי',
+  subtitle: 'כל צעד מקרב אותך למטרה!',
+  current: 15600,
+  goal: 25000,
+};
+const CLASS_CHALLENGE_PREVIEW = {
+  id: 'move-30-days',
+  icon: '🏆',
+  title: 'אתגר כיתתי',
+  subtitle: 'כולנו יחד משיגים יותר!',
+  current: 7450,
+  goal: 20000,
+};
+
 const fmt = (n) => n.toLocaleString('he-IL');
+
+// Rough demo-only conversions — the app doesn't track calories/distance
+// as real metrics yet, this is just enough to fill the redesigned stat
+// tiles with numbers that move together with the live step count.
+const caloriesFromSteps = (steps) => Math.round(steps * 0.04);
+const distanceKmFromSteps = (steps) => (steps * 0.00075).toFixed(1);
 
 // A thin branch by account type — kept as two separate child components
 // (not an early-return inside one component) so each can call its own
@@ -34,12 +74,14 @@ export default function Home() {
 }
 
 function HomeEmployee() {
+  const navigate = useNavigate();
   const { steps, status, requestPermission } = usePedometer();
   const { status: sleepSensorStatus, requestPermission: requestSleepPermission } = useSleepSensor();
   const { user } = useCurrentUser();
   const liveMode = status === 'active';
   const displaySteps = liveMode ? steps : DEMO_STEPS;
   const goalPct = Math.min(100, Math.round((displaySteps / DAILY_GOAL) * 100));
+  const weeklyPct = Math.min(100, Math.round((DEMO_WEEKLY_STEPS / WEEKLY_GOAL) * 100));
 
   const [sleepSummary, setSleepSummary] = useState(null);
   useEffect(() => {
@@ -55,28 +97,59 @@ function HomeEmployee() {
 
   return (
     <div className="home">
-      <h1 className="home__greeting">שלום {user.username} 👋</h1>
+      <header className="home-topbar">
+        <button type="button" className="home-topbar__icon" aria-label="תפריט">☰</button>
+        <h1 className="home-topbar__title">המסע שלי</h1>
+        <button type="button" className="home-topbar__icon" aria-label="התראות">
+          🔔
+          <span className="home-topbar__badge">3</span>
+        </button>
+      </header>
+
+      <p className="home__greeting">שלום {user.username} 👋</p>
 
       <PedometerBanner status={status} requestPermission={requestPermission} />
       <HealthConnectionCard />
 
-      <section className="card card--hero">
-        <p className="card__label">המסלול שלי היום</p>
-        <p className="stat-big">
-          {fmt(displaySteps)}
-          <span className="stat-big__unit">צעדים</span>
-        </p>
-        <ProgressBar value={goalPct} label={`${goalPct}% מהיעד היומי`} />
-        <p className="card__meta">
-          {goalPct}% מהיעד היומי
-          {!liveMode && <span className="card__meta-flag"> · תצוגת דוגמה</span>}
-        </p>
+      <LevelBadgeCard levelTitle={LEVEL_TITLE} progressPct={LEVEL_PROGRESS_PCT} caption="כל צעד מקרב אותך למטרה!" />
+
+      <section className="hero-scene">
+        <HeroIllustration className="hero-scene__bg" />
+        <div className="hero-scene__rings">
+          <div className="hero-scene__ring-block">
+            <p className="hero-scene__ring-title">הצעדים שלי היום</p>
+            <StepRing value={displaySteps} pct={goalPct} size={148} strokeWidth={12} icon="👟" label="צעדים" />
+            <p className="hero-scene__ring-sub">
+              {distanceKmFromSteps(displaySteps)} ק"מ
+              {!liveMode && <span className="card__meta-flag"> · תצוגת דוגמה</span>}
+            </p>
+          </div>
+          <div className="hero-scene__ring-block">
+            <p className="hero-scene__ring-title">הצעדים שלי השבוע</p>
+            <StepRing value={DEMO_WEEKLY_STEPS} pct={weeklyPct} size={148} strokeWidth={12} icon="📅" label="צעדים" />
+          </div>
+        </div>
       </section>
 
-      <div className="card stat-tile">
-        <span className="stat-tile__icon" aria-hidden="true">❤️</span>
-        <p className="stat-tile__value">{ACTIVITY_MIN} דק'</p>
-        <p className="stat-tile__label">פעילות</p>
+      <ChallengeCard challenge={DAILY_CHALLENGE_PREVIEW} onDetails={() => navigate(`/app/challenges/${DAILY_CHALLENGE_PREVIEW.id}`)} />
+      <ChallengeCard challenge={CLASS_CHALLENGE_PREVIEW} onDetails={() => navigate(`/app/challenges/${CLASS_CHALLENGE_PREVIEW.id}`)} />
+
+      <div className="stat-grid stat-grid--3">
+        <div className="card stat-tile">
+          <span className="stat-tile__icon" aria-hidden="true">🔥</span>
+          <p className="stat-tile__value">{fmt(caloriesFromSteps(displaySteps))}</p>
+          <p className="stat-tile__label">קלוריות</p>
+        </div>
+        <div className="card stat-tile">
+          <span className="stat-tile__icon" aria-hidden="true">📍</span>
+          <p className="stat-tile__value">{distanceKmFromSteps(displaySteps)}</p>
+          <p className="stat-tile__label">ק"מ</p>
+        </div>
+        <div className="card stat-tile">
+          <span className="stat-tile__icon" aria-hidden="true">⏱️</span>
+          <p className="stat-tile__value">{ACTIVITY_MIN}</p>
+          <p className="stat-tile__label">דקות פעילות</p>
+        </div>
       </div>
 
       <SleepCard session={sleepSummary?.session} sensorStatus={sleepSensorStatus} requestPermission={requestSleepPermission} />
