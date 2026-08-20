@@ -2701,6 +2701,34 @@ a { touch-action: manipulation; }
   flex-shrink: 0;
 }
 
+/* ---------- App-update banner ---------- */
+
+.update-banner {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.9rem;
+  padding: 0.6rem 1rem;
+  background: var(--blue-deep);
+  color: var(--white);
+  font-weight: 700;
+  font-size: 0.88rem;
+}
+
+.update-banner__cta {
+  padding: 0.35rem 0.9rem;
+  border-radius: var(--radius-pill);
+  border: none;
+  background: var(--white);
+  color: var(--blue-deep);
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
 .level-badge-card__caption {
   margin-top: 0.5rem;
   font-size: 0.85rem;
