@@ -31,12 +31,25 @@ function Thumbnail({ item }) {
 export default function Learning() {
   const navigate = useNavigate();
   const [items, setItems] = useState(null);
+  // Tracked separately from `items` — previously a failed fetch left
+  // `items` at its initial `null` forever, which was also the "still
+  // loading" signal, so an error showed the error text *and* a stuck
+  // "טוען…" spinner underneath it with no way to recover.
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [category, setCategory] = useState('all');
 
-  useEffect(() => {
-    api.listContent().then(({ content }) => setItems(content)).catch((err) => setError(err.message));
-  }, []);
+  const load = () => {
+    setLoading(true);
+    setError('');
+    api
+      .listContent()
+      .then(({ content }) => setItems(content))
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(load, []);
 
   const filtered = (items ?? []).filter((item) => category === 'all' || item.category === category);
 
@@ -59,9 +72,18 @@ export default function Learning() {
         ))}
       </div>
 
-      {error && <p className="form-error">{error}</p>}
-      {items === null && <p className="admin-table__empty">טוען…</p>}
-      {items !== null && filtered.length === 0 && <p className="org-empty">אין תכנים בקטגוריה הזו כרגע</p>}
+      {loading && <p className="admin-table__empty">טוען…</p>}
+
+      {!loading && error && (
+        <div className="card">
+          <p className="form-error">לא הצלחנו לטעון את התכנים. {error}</p>
+          <button type="button" className="btn-ghost btn-ghost--block" onClick={load}>
+            נסו שוב
+          </button>
+        </div>
+      )}
+
+      {!loading && !error && filtered.length === 0 && <p className="org-empty">אין תכנים בקטגוריה הזו כרגע</p>}
 
       <div className="learning-list">
         {filtered.map((item) => (

@@ -13,7 +13,9 @@ export default function LearningDetail() {
   const [claiming, setClaiming] = useState(false);
   const [justAwarded, setJustAwarded] = useState(null);
 
-  useEffect(() => {
+  const load = () => {
+    setError('');
+    setNotFound(false);
     api
       .listContent()
       .then(({ content }) => {
@@ -22,7 +24,9 @@ export default function LearningDetail() {
         setItem(found);
       })
       .catch((err) => setError(err.message));
-  }, [id]);
+  };
+
+  useEffect(load, [id]);
 
   const handleClaim = async () => {
     setClaiming(true);
@@ -42,9 +46,17 @@ export default function LearningDetail() {
     <div className="detail-section">
       <SubPageHeader title={item?.title ?? 'למידה'} onBack={() => navigate('/app/learning')} />
 
-      {error && <p className="form-error">{error}</p>}
-      {notFound && <p className="org-empty">התוכן לא נמצא</p>}
       {!item && !notFound && !error && <p className="admin-table__empty">טוען…</p>}
+      {notFound && <p className="org-empty">התוכן לא נמצא</p>}
+
+      {error && (
+        <div className="card">
+          <p className="form-error">לא הצלחנו לטעון את התוכן. {error}</p>
+          <button type="button" className="btn-ghost btn-ghost--block" onClick={load}>
+            נסו שוב
+          </button>
+        </div>
+      )}
 
       {item && (
         <>
