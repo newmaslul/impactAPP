@@ -7,12 +7,8 @@ export default function ChallengeForm({ onCancel, onSubmit }) {
   const [start, setStart] = useState('');
   const [end, setEnd] = useState('');
   const [goal, setGoal] = useState('');
-  const [audience, setAudience] = useState([]);
+  const [audience, setAudience] = useState('grade');
   const [error, setError] = useState('');
-
-  const toggleAudience = (id) => {
-    setAudience((prev) => (prev.includes(id) ? prev.filter((a) => a !== id) : [...prev, id]));
-  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -20,10 +16,9 @@ export default function ChallengeForm({ onCancel, onSubmit }) {
     if (!start || !end) return setError('נדרשת תקופת אתגר מלאה');
     if (new Date(end) <= new Date(start)) return setError('תאריך הסיום חייב להיות אחרי תאריך ההתחלה');
     if (!goal || Number(goal) <= 0) return setError('נדרש יעד גדול מ-0');
-    if (audience.length === 0) return setError('נדרשת לפחות קבוצת יעד אחת');
 
     setError('');
-    onSubmit({ name: name.trim(), type, start, end, goal: Number(goal), audience });
+    onSubmit({ name: name.trim(), type, start, end, goal: Number(goal), audience: [audience] });
   };
 
   return (
@@ -95,14 +90,15 @@ export default function ChallengeForm({ onCancel, onSubmit }) {
         </div>
 
         <div className="field">
-          <label>קבוצות</label>
-          <div className="checkbox-list">
+          <label>קהל יעד</label>
+          <div className="checkbox-list" role="radiogroup" aria-label="קהל יעד">
             {CHALLENGE_AUDIENCE_OPTIONS.map((opt) => (
               <label className="checkbox-row" key={opt.id}>
                 <input
-                  type="checkbox"
-                  checked={audience.includes(opt.id)}
-                  onChange={() => toggleAudience(opt.id)}
+                  type="radio"
+                  name="challenge-audience"
+                  checked={audience === opt.id}
+                  onChange={() => setAudience(opt.id)}
                 />
                 <span>{opt.label}</span>
               </label>

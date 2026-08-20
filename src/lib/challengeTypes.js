@@ -15,10 +15,18 @@ export const CHALLENGE_TYPES = [
   { id: 'sleep', label: 'שינה', icon: '😴' },
 ];
 
+// Single-choice: a challenge targets exactly one audience, which is also
+// what the admin challenges table's "קהל יעד" column shows per row.
 export const CHALLENGE_AUDIENCE_OPTIONS = [
   { id: 'grade', label: 'שכבה' },
+  { id: 'class', label: 'כיתה' },
   { id: 'school', label: 'ביה"ס' },
 ];
+
+export function audienceLabel(audience) {
+  const id = Array.isArray(audience) ? audience[0] : audience;
+  return CHALLENGE_AUDIENCE_OPTIONS.find((a) => a.id === id)?.label ?? '—';
+}
 
 // Fixed grade choices for both a class's own grade (AdminSchools.jsx)
 // and a challenge's grade-scoped audience — א' through י', the range

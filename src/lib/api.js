@@ -71,6 +71,7 @@ export const api = {
   getChallenge: (id) => request(`/challenges/${id}`, { auth: true }),
   adminListChallenges: () => request('/admin-challenges'),
   adminCreateChallenge: (payload) => request('/admin-challenges', { method: 'POST', body: payload }),
+  adminUpdateChallenge: (id, payload) => request(`/admin-challenges/${id}`, { method: 'PATCH', body: payload }),
   adminDeleteChallenge: (id) => request(`/admin-challenges/${id}`, { method: 'DELETE' }),
 
   adminListSchools: () => request('/admin-schools'),
