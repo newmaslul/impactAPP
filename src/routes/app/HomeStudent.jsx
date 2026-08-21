@@ -5,6 +5,7 @@ import StepRing from '../../components/StepRing.jsx';
 import HeroIllustration from '../../components/HeroIllustration.jsx';
 import LevelBadgeCard from '../../components/LevelBadgeCard.jsx';
 import { useActivitySync } from '../../hooks/useActivitySync.js';
+import { useMyChallenges } from '../../hooks/useMyChallenges.js';
 import { useCurrentUser } from '../../context/CurrentUserContext.jsx';
 import { api } from '../../lib/api.js';
 import { ChallengeCard } from './Challenges.jsx';
@@ -24,23 +25,6 @@ const WEEKLY_GOAL = 50000;
 const LEVEL_TITLE = 'שחקן מתמיד';
 const LEVEL_PROGRESS_PCT = 72;
 
-const DAILY_CHALLENGE_PREVIEW = {
-  id: 'daily-goal',
-  icon: '🔥',
-  title: 'אתגר יומי',
-  subtitle: 'כל צעד מקרב אותך למטרה!',
-  current: 15600,
-  goal: 25000,
-};
-const CLASS_CHALLENGE_PREVIEW = {
-  id: 'move-30-days',
-  icon: '🏆',
-  title: 'אתגר כיתתי',
-  subtitle: 'כולנו יחד משיגים יותר!',
-  current: 7450,
-  goal: 20000,
-};
-
 // Only used as a last-resort fallback for the day ring's distance
 // caption, when the real synced distance isn't available yet — students
 // already have a real distance_value from the scoring engine, unlike the
@@ -51,6 +35,7 @@ export default function HomeStudent() {
   const navigate = useNavigate();
   const { user } = useCurrentUser();
   const { status: sensorStatus, requestPermission, liveSteps } = useActivitySync();
+  const myChallenges = useMyChallenges();
   const [summary, setSummary] = useState(null);
   const [config, setConfig] = useState(null);
   const [error, setError] = useState('');
@@ -114,8 +99,9 @@ export default function HomeStudent() {
         </div>
       </section>
 
-      <ChallengeCard challenge={DAILY_CHALLENGE_PREVIEW} onDetails={() => navigate(`/app/challenges/${DAILY_CHALLENGE_PREVIEW.id}`)} />
-      <ChallengeCard challenge={CLASS_CHALLENGE_PREVIEW} onDetails={() => navigate('/app/class-ranking')} />
+      {myChallenges.map((c) => (
+        <ChallengeCard key={c.id} challenge={c} onDetails={() => navigate(`/app/challenges/${c.id}`)} />
+      ))}
 
       {summary && (
         <>

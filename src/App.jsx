@@ -9,7 +9,6 @@ import AppShell from './components/AppShell.jsx';
 import Home from './routes/app/Home.jsx';
 import Challenges from './routes/app/Challenges.jsx';
 import ChallengeDetail from './routes/app/ChallengeDetail.jsx';
-import ClassRanking from './routes/app/ClassRanking.jsx';
 import Group from './routes/app/Group.jsx';
 import Impact from './routes/app/Impact.jsx';
 import ImpactProjectVote from './routes/app/ImpactProjectVote.jsx';
@@ -51,7 +50,6 @@ export default function App() {
         <Route path="home" element={<Home />} />
         <Route path="challenges" element={<Challenges />} />
         <Route path="challenges/:id" element={<ChallengeDetail />} />
-        <Route path="class-ranking" element={<ClassRanking />} />
         <Route path="group" element={<Group />} />
         <Route path="impact" element={<Impact />} />
         <Route path="impact/vote" element={<ImpactProjectVote />} />

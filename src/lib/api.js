@@ -65,7 +65,7 @@ export const api = {
   updateActivityConfig: (payload) => request('/activity/config', { method: 'PUT', body: payload }),
   deleteHealthData: (source) => request(`/activity/health-data?source=${encodeURIComponent(source)}`, { method: 'DELETE', auth: true }),
 
-  classRanking: () => request('/class-ranking', { auth: true }),
+  classRanking: (challengeId) => request(`/class-ranking?challengeId=${challengeId}`, { auth: true }),
 
   listChallenges: () => request('/challenges', { auth: true }),
   getChallenge: (id) => request(`/challenges/${id}`, { auth: true }),

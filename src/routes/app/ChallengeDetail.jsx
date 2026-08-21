@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import SubPageHeader from '../../components/SubPageHeader.jsx';
 import ProgressBar from '../../components/ProgressBar.jsx';
+import ClassRanking from './ClassRanking.jsx';
 import { formatNumber } from '../../lib/format.js';
 import { api } from '../../lib/api.js';
 
@@ -53,6 +54,13 @@ export default function ChallengeDetail() {
         </div>
       </div>
     );
+  }
+
+  // A class/cross_grade-scoped challenge is scored by a group total, not
+  // the individual's own progress — its "פרטים" screen is the ranking,
+  // not a personal progress card.
+  if (challenge.scope === 'class' || challenge.scope === 'cross_grade') {
+    return <ClassRanking challengeId={id} title={challenge.title} scope={challenge.scope} />;
   }
 
   const pct = challenge.goal ? Math.round((challenge.current / challenge.goal) * 100) : 0;

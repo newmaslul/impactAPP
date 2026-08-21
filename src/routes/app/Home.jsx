@@ -3,6 +3,7 @@ import StepRing from '../../components/StepRing.jsx';
 import HeroIllustration from '../../components/HeroIllustration.jsx';
 import LevelBadgeCard from '../../components/LevelBadgeCard.jsx';
 import { usePedometer } from '../../hooks/usePedometer.js';
+import { useMyChallenges } from '../../hooks/useMyChallenges.js';
 import { useCurrentUser } from '../../context/CurrentUserContext.jsx';
 import HomeStudent from './HomeStudent.jsx';
 import { ChallengeCard } from './Challenges.jsx';
@@ -22,26 +23,6 @@ const WEEKLY_GOAL = 50000;
 
 const LEVEL_TITLE = 'שחקן מתמיד';
 const LEVEL_PROGRESS_PCT = 72;
-
-// Lightweight previews of two real challenges (Challenges.jsx owns the
-// full list) — same shape ChallengeCard already expects, so this reuses
-// that component as-is rather than a parallel card implementation.
-const DAILY_CHALLENGE_PREVIEW = {
-  id: 'daily-goal',
-  icon: '🔥',
-  title: 'אתגר יומי',
-  subtitle: 'כל צעד מקרב אותך למטרה!',
-  current: 15600,
-  goal: 25000,
-};
-const CLASS_CHALLENGE_PREVIEW = {
-  id: 'move-30-days',
-  icon: '🏆',
-  title: 'אתגר כיתתי',
-  subtitle: 'כולנו יחד משיגים יותר!',
-  current: 7450,
-  goal: 20000,
-};
 
 const fmt = (n) => n.toLocaleString('he-IL');
 
@@ -65,6 +46,7 @@ function HomeEmployee() {
   const navigate = useNavigate();
   const { steps, status } = usePedometer();
   const { user } = useCurrentUser();
+  const myChallenges = useMyChallenges();
   const liveMode = status === 'active';
   const displaySteps = liveMode ? steps : DEMO_STEPS;
   const goalPct = Math.min(100, Math.round((displaySteps / DAILY_GOAL) * 100));
@@ -103,8 +85,9 @@ function HomeEmployee() {
         </div>
       </section>
 
-      <ChallengeCard challenge={DAILY_CHALLENGE_PREVIEW} onDetails={() => navigate(`/app/challenges/${DAILY_CHALLENGE_PREVIEW.id}`)} />
-      <ChallengeCard challenge={CLASS_CHALLENGE_PREVIEW} onDetails={() => navigate('/app/class-ranking')} />
+      {myChallenges.map((c) => (
+        <ChallengeCard key={c.id} challenge={c} onDetails={() => navigate(`/app/challenges/${c.id}`)} />
+      ))}
 
       <div className="stat-grid">
         <div className="card stat-tile">

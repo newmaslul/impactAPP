@@ -1,15 +1,17 @@
-// Student/employee-facing challenge list + detail (src/routes/app/Challenges.jsx,
-// src/routes/app/ChallengeDetail.jsx) — replaces the local hardcoded mock
-// arrays those screens used to render. Backed by the real `challenges`
-// table (created via the admin "צור אתגר" form / admin-challenges) with
-// real per-user progress computed from the same activity/sleep data the
-// personal dashboard already uses.
+// Student/employee-facing challenge list + detail (src/routes/app/Home.jsx,
+// HomeStudent.jsx, Challenges.jsx, ChallengeDetail.jsx). Every currently-
+// valid challenge the viewer is "in scope" for gets its own card — no
+// picking a single "the" daily/weekly/class challenge — with real
+// progress computed per the type × scope × recurrence mechanism in
+// _shared/challenges/service.ts.
 
 import { corsHeaders, handleOptions, json } from '../_shared/cors.ts';
 import { supabaseAdmin } from '../_shared/supabaseAdmin.ts';
 import { getUserIdFromRequest, AuthError } from '../_shared/auth.ts';
-import { todayStr } from '../_shared/scoring/dates.ts';
-import { computeProgress, statusFor, iconFor, subtitleFor } from '../_shared/challenges/service.ts';
+import {
+  resolvePeriod, statusFor, computeCurrent, iconFor, subtitleFor, getUserWithClass, todayStr,
+  type Challenge,
+} from '../_shared/challenges/service.ts';
 
 function restSegments(req: Request): string[] {
   const segments = new URL(req.url).pathname.split('/').filter(Boolean);
@@ -36,31 +38,38 @@ Deno.serve(async (req) => {
 
 async function handleList(req: Request) {
   const userId = getUserIdFromRequest(req);
+  const { userClass } = await getUserWithClass(userId);
   const today = todayStr();
 
-  const { data: challenges, error } = await supabaseAdmin.from('challenges').select('*').order('start_date', { ascending: true });
+  const { data: challenges, error } = await supabaseAdmin.from('challenges').select('*');
   if (error) throw error;
 
   const active: any[] = [];
   const completed: any[] = [];
 
-  for (const c of challenges ?? []) {
+  for (const c of (challenges ?? []) as Challenge[]) {
     const status = statusFor(c, today);
-    const current = await computeProgress(userId, c);
-    const item = {
-      id: c.id,
-      icon: iconFor(c.type),
-      title: c.name,
-      subtitle: subtitleFor(c.type, c.goal),
-      current,
-      goal: c.goal,
-    };
     if (status === 'ended') {
-      completed.push({ ...item, done: true });
-    } else {
-      const daysLeft = Math.max(0, Math.round((new Date(c.end_date).getTime() - new Date(today).getTime()) / 86_400_000));
-      active.push({ ...item, daysLeft });
+      // A recurring challenge simply stops appearing once its bound
+      // passes — there's no single fixed period left to summarize, so
+      // (unlike 'once') it doesn't get a "completed" card either.
+      if (c.recurrence !== 'once') continue;
+      const period = { start: c.start_date!, end: c.end_date! };
+      const current = await computeCurrent(userId, userClass, c, period);
+      completed.push({
+        id: c.id, icon: iconFor(c.type), title: c.name, subtitle: subtitleFor(c),
+        current, goal: c.goal, done: true,
+      });
+      continue;
     }
+
+    const period = resolvePeriod(c, today)!; // status !== 'ended' guarantees a period here
+    const current = await computeCurrent(userId, userClass, c, period);
+    const daysLeft = Math.max(0, Math.round((new Date(period.end).getTime() - new Date(today).getTime()) / 86_400_000));
+    active.push({
+      id: c.id, icon: iconFor(c.type), title: c.name, subtitle: subtitleFor(c),
+      current, goal: c.goal, daysLeft,
+    });
   }
 
   return json({ active, completed });
@@ -68,26 +77,30 @@ async function handleList(req: Request) {
 
 async function handleDetail(req: Request, id: string) {
   const userId = getUserIdFromRequest(req);
+  const { userClass } = await getUserWithClass(userId);
   const today = todayStr();
 
   const { data: c, error } = await supabaseAdmin.from('challenges').select('*').eq('id', id).maybeSingle();
   if (error) throw error;
   if (!c) return json({ error: 'האתגר לא נמצא' }, 404);
 
-  const current = await computeProgress(userId, c);
-  const status = statusFor(c, today);
+  const challenge = c as Challenge;
+  const status = statusFor(challenge, today);
+  const period = resolvePeriod(challenge, today) ?? { start: challenge.start_date ?? today, end: challenge.end_date ?? today };
+  const current = await computeCurrent(userId, userClass, challenge, period);
 
   return json({
     challenge: {
-      id: c.id,
-      type: c.type,
-      title: c.name,
-      subtitle: subtitleFor(c.type, c.goal),
-      icon: iconFor(c.type),
+      id: challenge.id,
+      type: challenge.type,
+      scope: challenge.scope,
+      title: challenge.name,
+      subtitle: subtitleFor(challenge),
+      icon: iconFor(challenge.type),
       current,
-      goal: c.goal,
-      startDate: c.start_date,
-      endDate: c.end_date,
+      goal: challenge.goal,
+      startDate: period.start,
+      endDate: period.end,
       status,
     },
   });

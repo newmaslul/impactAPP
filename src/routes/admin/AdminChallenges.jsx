@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import ChallengeForm from './ChallengeForm.jsx';
-import { challengeTypeMeta, audienceLabel } from '../../lib/challengeTypes.js';
+import { challengeTypeMeta, scopeLabel, recurrenceLabel } from '../../lib/challengeTypes.js';
 import { formatNumber } from '../../lib/format.js';
 import { api } from '../../lib/api.js';
 
@@ -13,11 +13,16 @@ const SCORING = [
 ];
 
 // Status is derived from the dates every render rather than trusted from
-// a stored value — a challenge that was 'active' when created is 'ended'
-// by the time an admin looks at this list a month later.
+// a stored value — a 'once' challenge that was 'active' when created is
+// 'ended' by the time an admin looks at this list a month later, and a
+// recurring one is 'ended' once its "תחום בזמן" cutoff passes.
 function statusFor(c, today) {
-  if (c.end_date < today) return 'ended';
-  if (c.start_date > today) return 'scheduled';
+  if (c.recurrence === 'once') {
+    if (!c.end_date || c.end_date < today) return 'ended';
+    if (c.start_date && c.start_date > today) return 'scheduled';
+    return 'active';
+  }
+  if (c.recurrence_bound_until && c.recurrence_bound_until < today) return 'ended';
   return 'active';
 }
 
@@ -33,16 +38,22 @@ function formatDate(iso) {
   return `${d}/${m}/${y.slice(2)}`;
 }
 
+function periodLabel(c) {
+  if (c.recurrence === 'once') return `${formatDate(c.start_date)} — ${formatDate(c.end_date)}`;
+  const cadence = recurrenceLabel(c.recurrence);
+  return c.recurrence_bound_until ? `${cadence} · עד ${formatDate(c.recurrence_bound_until)}` : `${cadence} · ללא הגבלה`;
+}
+
 export default function AdminChallenges() {
   const [challenges, setChallenges] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [view, setView] = useState('list'); // 'list' | 'create'
 
-  // Inline-edit state for תקופה + יעד — same ערוך/שמור/ביטול pattern as
-  // AdminSchools.jsx's schools/classes tables.
+  // Inline-edit state — for a 'once' challenge this edits תקופה; for a
+  // recurring one it edits תחום בזמן instead. יעד is always editable.
   const [editingId, setEditingId] = useState(null);
-  const [edit, setEdit] = useState({ start: '', end: '', goal: '' });
+  const [edit, setEdit] = useState({ start: '', end: '', boundUntil: '', goal: '' });
   const [saving, setSaving] = useState(false);
 
   const load = () => {
@@ -80,17 +91,17 @@ export default function AdminChallenges() {
   const startEditing = (c) => {
     setError('');
     setEditingId(c.id);
-    setEdit({ start: c.start_date ?? '', end: c.end_date ?? '', goal: c.goal ?? '' });
+    setEdit({ start: c.start_date ?? '', end: c.end_date ?? '', boundUntil: c.recurrence_bound_until ?? '', goal: c.goal ?? '' });
   };
 
   const cancelEditing = () => setEditingId(null);
 
-  const handleSave = async (id) => {
-    if (!edit.start || !edit.end) {
+  const handleSave = async (c) => {
+    if (c.recurrence === 'once' && (!edit.start || !edit.end)) {
       setError('נדרשת תקופת אתגר מלאה');
       return;
     }
-    if (new Date(edit.end) <= new Date(edit.start)) {
+    if (c.recurrence === 'once' && new Date(edit.end) <= new Date(edit.start)) {
       setError('תאריך הסיום חייב להיות אחרי תאריך ההתחלה');
       return;
     }
@@ -101,7 +112,10 @@ export default function AdminChallenges() {
     setSaving(true);
     setError('');
     try {
-      await api.adminUpdateChallenge(id, { start: edit.start, end: edit.end, goal: Number(edit.goal) });
+      const payload = c.recurrence === 'once'
+        ? { start: edit.start, end: edit.end, goal: Number(edit.goal) }
+        : { recurrenceBoundUntil: edit.boundUntil || null, goal: Number(edit.goal) };
+      await api.adminUpdateChallenge(c.id, payload);
       setEditingId(null);
       load();
     } catch (err) {
@@ -137,7 +151,8 @@ export default function AdminChallenges() {
                 <tr>
                   <th>שם</th>
                   <th>סוג</th>
-                  <th>קהל יעד</th>
+                  <th>קהל תחרות</th>
+                  <th>תדירות</th>
                   <th>תקופה</th>
                   <th>יעד</th>
                   <th>סטטוס</th>
@@ -155,23 +170,34 @@ export default function AdminChallenges() {
                       <tr key={c.id}>
                         <td className="admin-table__name">{c.name}</td>
                         <td><span aria-hidden="true">{t.icon}</span> {t.label}</td>
-                        <td>{audienceLabel(c.audience)}</td>
+                        <td>{scopeLabel(c.scope)}</td>
+                        <td>{recurrenceLabel(c.recurrence)}</td>
                         <td>
-                          <div className="date-range-row">
+                          {c.recurrence === 'once' ? (
+                            <div className="date-range-row">
+                              <input
+                                type="date"
+                                className="text-input"
+                                value={edit.start}
+                                onChange={(e) => setEdit((prev) => ({ ...prev, start: e.target.value }))}
+                              />
+                              <span className="date-range-row__sep" aria-hidden="true">—</span>
+                              <input
+                                type="date"
+                                className="text-input"
+                                value={edit.end}
+                                onChange={(e) => setEdit((prev) => ({ ...prev, end: e.target.value }))}
+                              />
+                            </div>
+                          ) : (
                             <input
                               type="date"
                               className="text-input"
-                              value={edit.start}
-                              onChange={(e) => setEdit((prev) => ({ ...prev, start: e.target.value }))}
+                              placeholder="ללא הגבלה"
+                              value={edit.boundUntil}
+                              onChange={(e) => setEdit((prev) => ({ ...prev, boundUntil: e.target.value }))}
                             />
-                            <span className="date-range-row__sep" aria-hidden="true">—</span>
-                            <input
-                              type="date"
-                              className="text-input"
-                              value={edit.end}
-                              onChange={(e) => setEdit((prev) => ({ ...prev, end: e.target.value }))}
-                            />
-                          </div>
+                          )}
                         </td>
                         <td>
                           <input
@@ -188,7 +214,7 @@ export default function AdminChallenges() {
                           <span className={`status-pill status-pill--${status}`}>{statusLabel(status)}</span>
                         </td>
                         <td style={{ display: 'flex', gap: '0.5rem' }}>
-                          <button type="button" className="link-btn" disabled={saving} onClick={() => handleSave(c.id)}>
+                          <button type="button" className="link-btn" disabled={saving} onClick={() => handleSave(c)}>
                             {saving ? 'שומר…' : 'שמור'}
                           </button>
                           <button type="button" className="link-btn" disabled={saving} onClick={cancelEditing}>ביטול</button>
@@ -203,8 +229,9 @@ export default function AdminChallenges() {
                       <td>
                         <span aria-hidden="true">{t.icon}</span> {t.label}
                       </td>
-                      <td>{audienceLabel(c.audience)}</td>
-                      <td className="admin-table__points">{formatDate(c.start_date)} — {formatDate(c.end_date)}</td>
+                      <td>{scopeLabel(c.scope)}</td>
+                      <td>{recurrenceLabel(c.recurrence)}</td>
+                      <td className="admin-table__points">{periodLabel(c)}</td>
                       <td className="admin-table__points">{formatNumber(c.goal)}</td>
                       <td>
                         <span className={`status-pill status-pill--${status}`}>{statusLabel(status)}</span>
